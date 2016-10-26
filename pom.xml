@@ -53,9 +53,15 @@
     </dependencies>
 
     <distributionManagement>
+        <repository>
+            <id>nexus</id>
+            <name>Releases</name>
+            <url>https://npm.luminis-ams.nl/repository/maven-releases</url>
+        </repository>
         <snapshotRepository>
-            <id>nexus-snapshots</id>
-            <url>https://npm.luminis-ams.nl/content/repositories/snapshots</url>
+            <id>nexus</id>
+            <name>Snapshots</name>
+            <url>https://npm.luminis-ams.nl/repository/maven-snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
