@@ -62,7 +62,7 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
         }
     }
 
-    @Value("${eu.luminis.elastic.hostnames}")
+    @Value("${eu.luminis.elastic.hostnames:#{\"localhost:9200\"}}")
     public void setHostnames(String[] hostnames) {
         this.hostnames = hostnames;
     }
