@@ -1,11 +1,15 @@
 package eu.luminis.elastic.document;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.response.GetByIdResponse;
 import eu.luminis.elastic.document.response.QueryResponse;
 import eu.luminis.elastic.index.IndexDocumentException;
+import eu.luminis.elastic.index.response.BulkIndexResponse;
 import eu.luminis.elastic.index.response.IndexResponse;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
@@ -17,13 +21,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Used to execute actions that interact with the documents in an elasticsearch index.
@@ -177,6 +181,63 @@ public class DocumentService {
         }
     }
 
+    /**
+     *
+     * @param indexRequests
+     */
+    public void bulkIndex(List<IndexRequest> indexRequests) {
+        try {
+            HttpEntity requestBody = new InputStreamEntity(bulkUpdateToStream(indexRequests));
+            Response response = client.performRequest(
+                    "POST","_bulk", new Hashtable<>(), requestBody);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode > 299) {
+                logger.warn("Problem while indexing a document: {}", response.getStatusLine().getReasonPhrase());
+                throw new QueryExecutionException("Could not index a document, status code is " + statusCode);
+            }
+
+            /*
+                For performance reasons, there is no point in deserializing the items part of the response
+                leaving it in here for debugging
+             */
+            BulkIndexResponse queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), BulkIndexResponse.class);
+
+            logger.debug("BulkIndex response: errors: {}, tooK: {}", queryResponse.getErrors(), queryResponse.getTook());
+        } catch (IOException e) {
+            logger.warn("Problem while executing request.", e);
+            throw new IndexDocumentException("Error when executing a document");
+        }
+    }
+
+    private String makeIndexLine(IndexRequest request) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("_index", request.getIndex());
+        map.put("_type", request.getType());
+        if (request.getId() != null) {
+            map.put("_id", request.getId());
+        }
+        Map<String, Object> command = new HashMap<>();
+        command.put(request.action(), map);
+        try {
+            return jacksonObjectMapper.writeValueAsString(command);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private InputStream bulkUpdateToStream(List<IndexRequest> requests) throws IOException {
+        String source = requests.stream().map(req -> {
+            try {
+                String commandStr = makeIndexLine(req);
+                String doc = jacksonObjectMapper.writeValueAsString(req.getEntity());
+                return new String[] {commandStr, doc};
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }).flatMap(Stream::of).collect(Collectors.joining("\n"));
+        return IOUtils.toInputStream(source, "UTF-8");
+    }
 
     private <T> void addIdToEntity(String id, T source) {
         Method setIdMethod;
