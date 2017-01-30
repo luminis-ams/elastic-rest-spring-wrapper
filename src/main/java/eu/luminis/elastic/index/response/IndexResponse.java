@@ -1,7 +1,13 @@
 package eu.luminis.elastic.index.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.luminis.elastic.document.response.Shards;
 
+/**
+ * By Jettro Coenradie
+ *
+ * https://github.com/luminis-ams/elastic-rest-spring-wrapper/blob/master/LICENSE
+ */
 public class IndexResponse {
     @JsonProperty(value = "_index")
     private String index;
@@ -15,11 +21,28 @@ public class IndexResponse {
     @JsonProperty(value = "_version")
     private long version;
 
+    @JsonProperty(value = "_shards")
+    private Shards shards;
+
     @JsonProperty(value = "result")
     private String result;
 
     @JsonProperty(value = "created")
     private Boolean created;
+
+    @JsonProperty(value = "error")
+    private Error error;
+
+    @JsonProperty(value = "status")
+    private int status;
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
 
     public String getIndex() {
         return index;
@@ -67,5 +90,21 @@ public class IndexResponse {
 
     public void setCreated(Boolean created) {
         this.created = created;
+    }
+
+    public Error getError() {
+        return error;
+    }
+
+    public void setError(Error error) {
+        this.error = error;
+    }
+
+    public Shards getShards() {
+        return shards;
+    }
+
+    public void setShards(Shards shards) {
+        this.shards = shards;
     }
 }

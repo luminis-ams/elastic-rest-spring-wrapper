@@ -7,7 +7,6 @@ public class IndexRequest {
     public enum Action {
         INDEX, CREATE, DELETE, UPDATE;
     }
-
     private String index;
     private String type;
     private String id;
@@ -20,6 +19,9 @@ public class IndexRequest {
     }
 
     public IndexRequest setUpdate(boolean update) {
+        if (update) {
+            this.action = Action.UPDATE;
+        }
         this.update = update;
         return this;
     }
@@ -66,22 +68,27 @@ public class IndexRequest {
 
     public IndexRequest setAction(Action action) {
         this.action = action;
+        this.update = action == Action.UPDATE;
         return this;
     }
 
-    public IndexRequest create() {
-        return setAction(Action.CREATE);
+    public Action getAction() {
+        return action;
     }
 
-    public IndexRequest index() {
-        return setAction(Action.INDEX);
+    public static IndexRequest create() {
+        return new IndexRequest();
     }
 
-    public IndexRequest update() {
-        return setAction(Action.UPDATE);
-    }
-
-    public IndexRequest delete() {
-        return setAction(Action.DELETE);
+    @Override
+    public String toString() {
+        return "IndexRequest{" +
+                "index='" + index + '\'' +
+                ", type='" + type + '\'' +
+                ", id='" + id + '\'' +
+                ", action=" + action +
+                ", entity=" + entity +
+                ", update=" + update +
+                '}';
     }
 }

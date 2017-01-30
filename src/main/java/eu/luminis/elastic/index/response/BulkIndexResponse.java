@@ -9,7 +9,7 @@ public class BulkIndexResponse {
     private Boolean errors;
 
     @JsonProperty(value = "items")
-    private List<IndexResponse> items;
+    private List<ResponseItem> items;
 
     @JsonProperty(value = "took")
     private Long took;
@@ -22,11 +22,11 @@ public class BulkIndexResponse {
         this.errors = errors;
     }
 
-    public List<IndexResponse> getItems() {
+    public List<ResponseItem> getItems() {
         return items;
     }
 
-    public void setItems(List<IndexResponse> items) {
+    public void setItems(List<ResponseItem> items) {
         this.items = items;
     }
 
