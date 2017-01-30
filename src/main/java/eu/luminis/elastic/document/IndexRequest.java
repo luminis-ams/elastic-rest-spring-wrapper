@@ -4,18 +4,25 @@ package eu.luminis.elastic.document;
  * Created by jettrocoenradie on 23/08/2016.
  */
 public class IndexRequest {
+    public enum Action {
+        INDEX, CREATE, DELETE, UPDATE;
+    }
     private String index;
     private String type;
     private String id;
+    private Action action = Action.INDEX;
     private Object entity;
-    private Boolean addId;
+    private boolean update = false;
 
-    public Boolean getAddId() {
-        return addId;
+    public boolean isUpdate() {
+        return update;
     }
 
-    public IndexRequest setAddId(Boolean addId) {
-        this.addId = addId;
+    public IndexRequest setUpdate(boolean update) {
+        if (update) {
+            this.action = Action.UPDATE;
+        }
+        this.update = update;
         return this;
     }
 
@@ -55,7 +62,33 @@ public class IndexRequest {
         return this;
     }
 
+    public String action() {
+        return this.action.name().toLowerCase();
+    }
+
+    public IndexRequest setAction(Action action) {
+        this.action = action;
+        this.update = action == Action.UPDATE;
+        return this;
+    }
+
+    public Action getAction() {
+        return action;
+    }
+
     public static IndexRequest create() {
         return new IndexRequest();
+    }
+
+    @Override
+    public String toString() {
+        return "IndexRequest{" +
+                "index='" + index + '\'' +
+                ", type='" + type + '\'' +
+                ", id='" + id + '\'' +
+                ", action=" + action +
+                ", entity=" + entity +
+                ", update=" + update +
+                '}';
     }
 }

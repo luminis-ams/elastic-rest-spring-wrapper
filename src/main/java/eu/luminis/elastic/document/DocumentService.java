@@ -1,12 +1,16 @@
 package eu.luminis.elastic.document;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.response.GetByIdResponse;
 import eu.luminis.elastic.document.response.QueryResponse;
 import eu.luminis.elastic.index.IndexDocumentException;
+import eu.luminis.elastic.index.response.BulkIndexResponse;
 import eu.luminis.elastic.index.response.IndexResponse;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
 import org.elasticsearch.client.RestClient;
@@ -20,10 +24,13 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
+import static eu.luminis.elastic.document.IndexRequest.Action.DELETE;
+import static eu.luminis.elastic.document.IndexRequest.Action.UPDATE;
+import static java.util.stream.Collectors.joining;
 
 /**
  * Used to execute actions that interact with the documents in an elasticsearch index.
@@ -34,6 +41,7 @@ public class DocumentService {
 
     private final RestClient client;
     private final ObjectMapper jacksonObjectMapper;
+    public static final int BATCH_SIZE = 1000;
 
     @Autowired
     public DocumentService(RestClient client, ObjectMapper jacksonObjectMapper) {
@@ -177,6 +185,103 @@ public class DocumentService {
         }
     }
 
+
+    private String makeIndexLine(IndexRequest request) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("_index", request.getIndex());
+        map.put("_type", request.getType());
+        if (request.getId() != null) {
+            map.put("_id", request.getId());
+        }
+        Map<String, Object> command = new HashMap<>();
+        command.put(request.action(), map);
+        try {
+            return jacksonObjectMapper.writeValueAsString(command);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String bulkUpdateToJson(List<IndexRequest> requests) {
+        return requests.stream().map(req -> {
+            try {
+                String commandStr = makeIndexLine(req);
+                if (req.getAction() == DELETE) {
+                    return commandStr;
+                } else {
+                    Object entity;
+                    if (req.getAction() == UPDATE) {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("doc", req.getEntity());
+                        entity = map;
+                    } else {
+                        entity = req.getEntity();
+                    }
+                    return commandStr + "\n" + jacksonObjectMapper.writeValueAsString(entity);
+                }
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(joining("\n")) + "\n"; // _bulk update request body must be terminated by new line
+    }
+
+    /**
+     * @param indexRequests
+     * @return number of documents successfully indexed
+     */
+    public long bulkIndex(List<IndexRequest> indexRequests) {
+        final AtomicLong count = new AtomicLong(0);
+        ListUtils.partition(indexRequests, BATCH_SIZE).forEach(requestChunk -> {
+            int errors = bulkIndex(bulkUpdateToJson(requestChunk));
+            count.addAndGet(requestChunk.size() - errors);
+        });
+
+        logger.debug("Indexed documents {} / {}", count.longValue(), indexRequests.size());
+
+        return count.get();
+    }
+
+    /**
+     * @return true if errors
+     */
+    private int bulkIndex(String request) {
+        try {
+            HttpEntity requestEntity = new StringEntity(request, Charset.forName("UTF-8"));
+            Response response = client.performRequest("POST","_bulk", new HashMap<>(), requestEntity);
+            EntityUtils.consume(requestEntity);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode > 299) {
+                logger.warn("Problem while indexing a document: {}", response.getStatusLine().getReasonPhrase());
+                throw new QueryExecutionException("Could not index a document, status code is " + statusCode);
+            }
+
+            BulkIndexResponse queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), BulkIndexResponse.class);
+            logger.debug("BulkIndex response: errors: {}, tooK: {}", queryResponse.getErrors(), queryResponse.getTook());
+
+            if (queryResponse.getErrors()) {
+                List<IndexResponse> errors = queryResponse.getItems()
+                        .stream()
+                        .map(item -> item.getIndex())
+                        .filter(item -> item.getError() != null)
+                        .collect(Collectors.toList());
+
+                errors.forEach(index -> {
+                    logger.error("Failed to index document {} caused by {}", index.getId(), index.getError());
+                });
+                return errors.size();
+            }
+
+            return 0;
+        } catch (ResponseException e) {
+            logger.error("Elasticsearch Index error for index", e);
+
+            throw new IndexDocumentException(e.getResponse().getStatusLine());
+        } catch (IOException e) {
+            logger.warn("Problem while executing request.", e);
+            throw new IndexDocumentException("Error when executing a document");
+        }
+    }
 
     private <T> void addIdToEntity(String id, T source) {
         Method setIdMethod;
