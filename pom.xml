@@ -5,7 +5,7 @@
 
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.1.0</version>
     <packaging>jar</packaging>
 
     <name>eu.luminis.elastic-rest-spring-wrapper</name>
