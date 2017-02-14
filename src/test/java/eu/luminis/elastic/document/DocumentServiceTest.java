@@ -1,6 +1,5 @@
 package eu.luminis.elastic.document;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
@@ -8,7 +7,6 @@ import eu.luminis.elastic.document.helpers.MessageEntityByIdTypeReference;
 import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexDocumentException;
 import eu.luminis.elastic.index.IndexService;
-import org.elasticsearch.client.RestClient;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -175,21 +173,4 @@ public class DocumentServiceTest extends ElasticTestCase {
         documentService.remove(INDEX, TYPE, "non_existing_delete");
     }
 
-    @Test
-    public void queryByTemplate() {
-
-        QueryByTemplateRequest request = QueryByTemplateRequest.create()
-                .setIndexName(INDEX)
-                .setTemplateName("find_message.twig")
-                .setAddId(true)
-                .setTypeReference(new MessageEntityTypeReference())
-                .addModelParam("message", "elastic");
-
-        List<MessageEntity> entities = documentService.queryByTemplate(request);
-
-        assertEquals(2, entities.size());
-        List<String> ids = Arrays.asList(entities.get(0).getId(), entities.get(1).getId());
-        assertTrue(ids.contains("elastic_1"));
-        assertTrue(ids.contains("elastic_2"));
-    }
 }

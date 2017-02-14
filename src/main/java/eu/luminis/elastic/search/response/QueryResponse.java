@@ -1,6 +1,8 @@
-package eu.luminis.elastic.document.response;
+package eu.luminis.elastic.search.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.luminis.elastic.document.response.Hits;
+import eu.luminis.elastic.document.response.Shards;
 
 
 public class QueryResponse<T> {

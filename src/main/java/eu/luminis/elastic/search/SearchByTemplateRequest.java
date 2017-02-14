@@ -1,4 +1,4 @@
-package eu.luminis.elastic.document;
+package eu.luminis.elastic.search;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.jtwig.JtwigModel;
@@ -12,7 +12,7 @@ import java.util.Map;
  * you might want to obtain the id when executing a query and still add it to the entity object. In that case
  * you can use {@link #addId} true to indicate to copy the id into the entity object.</p>
  */
-public class QueryByTemplateRequest {
+public class SearchByTemplateRequest {
     private String indexName;
     private String templateName;
     private Map<String,Object> modelParams = new HashMap<>();
@@ -23,7 +23,7 @@ public class QueryByTemplateRequest {
         return addId;
     }
 
-    public QueryByTemplateRequest setAddId(Boolean addId) {
+    public SearchByTemplateRequest setAddId(Boolean addId) {
         this.addId = addId;
         return this;
     }
@@ -32,7 +32,7 @@ public class QueryByTemplateRequest {
         return indexName;
     }
 
-    public QueryByTemplateRequest setIndexName(String indexName) {
+    public SearchByTemplateRequest setIndexName(String indexName) {
         this.indexName = indexName;
         return this;
     }
@@ -41,7 +41,7 @@ public class QueryByTemplateRequest {
         return templateName;
     }
 
-    public QueryByTemplateRequest setTemplateName(String templateName) {
+    public SearchByTemplateRequest setTemplateName(String templateName) {
         this.templateName = templateName;
         return this;
     }
@@ -50,12 +50,12 @@ public class QueryByTemplateRequest {
         return modelParams;
     }
 
-    public QueryByTemplateRequest setModelParams(Map<String, Object> modelParams) {
+    public SearchByTemplateRequest setModelParams(Map<String, Object> modelParams) {
         this.modelParams = modelParams;
         return this;
     }
 
-    public QueryByTemplateRequest addModelParam(String key, Object value) {
+    public SearchByTemplateRequest addModelParam(String key, Object value) {
         this.modelParams.put(key, value);
         return this;
     }
@@ -64,7 +64,7 @@ public class QueryByTemplateRequest {
         return typeReference;
     }
 
-    public QueryByTemplateRequest setTypeReference(TypeReference typeReference) {
+    public SearchByTemplateRequest setTypeReference(TypeReference typeReference) {
         this.typeReference = typeReference;
         return this;
     }
@@ -77,7 +77,7 @@ public class QueryByTemplateRequest {
         return template.render(model);
     }
 
-    public static QueryByTemplateRequest create() {
-        return new QueryByTemplateRequest();
+    public static SearchByTemplateRequest create() {
+        return new SearchByTemplateRequest();
     }
 }

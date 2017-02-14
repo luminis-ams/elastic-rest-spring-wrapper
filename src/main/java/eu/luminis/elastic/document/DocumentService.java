@@ -2,7 +2,6 @@ package eu.luminis.elastic.document;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.response.GetByIdResponse;
-import eu.luminis.elastic.document.response.QueryResponse;
 import eu.luminis.elastic.index.IndexDocumentException;
 import eu.luminis.elastic.document.response.IndexResponse;
 import org.apache.http.HttpEntity;
@@ -14,16 +13,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Hashtable;
-import java.util.List;
+
+import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
 
 /**
  * Used to execute actions that interact with the documents in an elasticsearch index.
@@ -39,41 +34,6 @@ public class DocumentService {
     public DocumentService(RestClient client, ObjectMapper jacksonObjectMapper) {
         this.client = client;
         this.jacksonObjectMapper = jacksonObjectMapper;
-    }
-
-    /**
-     * Executes a search query using the provided template
-     * @param request Object containing the required parameters to execute the request
-     * @param <T> Type of resulting objects, must be mapped from json result into java entity
-     * @return List of mapped objects
-     */
-    public <T> List<T> queryByTemplate(QueryByTemplateRequest request) {
-        Assert.notNull(request, "Need to provide a QueryByTemplateRequest object");
-
-        try {
-            Response response = client.performRequest(
-                    "GET",
-                    request.getIndexName() + "/_search",
-                    new HashMap<>(),
-                    new StringEntity(request.createQuery(), Charset.defaultCharset()));
-
-            QueryResponse<T> queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
-
-            List<T> result = new ArrayList<>();
-            queryResponse.getHits().getHits().forEach(tHit -> {
-                T source = tHit.getSource();
-                if (request.getAddId()) {
-                    addIdToEntity(tHit.getId(), source);
-                }
-                result.add(source);
-            });
-
-            return result;
-        } catch (IOException e) {
-            logger.warn("Problem while executing request.", e);
-            throw new QueryExecutionException("Error when executing a document");
-        }
-
     }
 
     /**
@@ -176,16 +136,4 @@ public class DocumentService {
         }
     }
 
-
-    private <T> void addIdToEntity(String id, T source) {
-        Method setIdMethod;
-        try {
-            setIdMethod = source.getClass().getMethod("setId", String.class);
-            setIdMethod.invoke(source, id);
-        } catch (NoSuchMethodException | InvocationTargetException e) {
-            throw new QueryExecutionException("The setter for the id method is not available.", e);
-        } catch (IllegalAccessException e) {
-            throw new QueryExecutionException("Id argument seems to be wrong", e);
-        }
-    }
 }
