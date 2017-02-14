@@ -1,4 +1,4 @@
-package eu.luminis.elastic.index.response;
+package eu.luminis.elastic.document.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -20,6 +20,9 @@ public class IndexResponse {
 
     @JsonProperty(value = "created")
     private Boolean created;
+
+    @JsonProperty(value = "_shards")
+    private Shards shards;
 
     public String getIndex() {
         return index;
@@ -67,5 +70,13 @@ public class IndexResponse {
 
     public void setCreated(Boolean created) {
         this.created = created;
+    }
+
+    public Shards getShards() {
+        return shards;
+    }
+
+    public void setShards(Shards shards) {
+        this.shards = shards;
     }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.response.GetByIdResponse;
 import eu.luminis.elastic.document.response.QueryResponse;
 import eu.luminis.elastic.index.IndexDocumentException;
-import eu.luminis.elastic.index.response.IndexResponse;
+import eu.luminis.elastic.document.response.IndexResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
@@ -149,7 +149,6 @@ public class DocumentService {
             IndexResponse queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), IndexResponse.class);
 
             return queryResponse.getId();
-
         } catch (IOException e) {
             logger.warn("Problem while executing request.", e);
             throw new IndexDocumentException("Error when executing a document");

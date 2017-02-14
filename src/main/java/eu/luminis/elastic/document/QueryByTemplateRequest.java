@@ -8,7 +8,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by jettrocoenradie on 23/08/2016.
+ * <p>If your entity object contains the field <code>id</code>, but you want to generate the id in elasticsearch,
+ * you might want to obtain the id when executing a query and still add it to the entity object. In that case
+ * you can use {@link #addId} true to indicate to copy the id into the entity object.</p>
  */
 public class QueryByTemplateRequest {
     private String indexName;

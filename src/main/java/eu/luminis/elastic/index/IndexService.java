@@ -1,6 +1,10 @@
 package eu.luminis.elastic.index;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.luminis.elastic.cluster.ClusterApiException;
 import eu.luminis.elastic.document.QueryExecutionException;
+import eu.luminis.elastic.document.response.Shards;
+import eu.luminis.elastic.index.response.RefreshResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
@@ -12,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.Hashtable;
 
 /**
@@ -22,10 +27,12 @@ public class IndexService {
     private static final Logger logger = LoggerFactory.getLogger(IndexService.class);
 
     private final RestClient client;
+    private final ObjectMapper jacksonObjectMapper;
 
     @Autowired
-    public IndexService(RestClient client) {
+    public IndexService(RestClient client, ObjectMapper jacksonObjectMapper) {
         this.client = client;
+        this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
     public Boolean indexExist(String indexName) {
@@ -73,5 +80,53 @@ public class IndexService {
             logger.warn("Problem creating new index.");
             throw new IndexApiException("Problem creating new index", e);
         }
+    }
+
+    public void dropIndex(String indexName) {
+        try {
+            Response response = client.performRequest(
+                    "DELETE",
+                    indexName);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode > 499) {
+                logger.warn("Problem while deleting an index: {}", response.getStatusLine().getReasonPhrase());
+                throw new QueryExecutionException("Could not delete index, status code is " + statusCode);
+            }
+        } catch (IOException e) {
+            logger.warn("Problem deleting index.");
+            throw new IndexApiException("Problem deleting index", e);
+        }
+
+    }
+
+    public void refreshIndexes(String... names) {
+        try {
+            String endpoint = "/_refresh";
+            if (names.length > 0) {
+                endpoint = "/" + String.join(",",names) + endpoint;
+            }
+
+            Response response = client.performRequest(
+                    "POST",
+                    endpoint
+            );
+
+            if (response.getStatusLine().getStatusCode() > 399) {
+                logger.warn("Problem while refreshing indexes: {}", String.join(",",names));
+            }
+
+            if (logger.isDebugEnabled()) {
+                HttpEntity entity = response.getEntity();
+
+                RefreshResponse refreshResponse = jacksonObjectMapper.readValue(entity.getContent(), RefreshResponse.class);
+                Shards shards = refreshResponse.getShards();
+                logger.debug("Shards refreshed: total {}, successfull {}, failed {}", shards.getTotal(), shards.getSuccessful(), shards.getFailed());
+            }
+        } catch (IOException e) {
+            logger.warn("Problem while executing refresh request.", e);
+            throw new ClusterApiException("Error when refreshing indexes." + e.getMessage());
+        }
+
     }
 }

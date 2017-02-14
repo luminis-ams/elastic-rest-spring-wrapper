@@ -2,6 +2,11 @@ package eu.luminis.elastic.document.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Response object used when asking for a document by Id. The response contains the entity as provided by the
+ * <code>TypeReference</code> in the {@link eu.luminis.elastic.document.QueryByIdRequest}.
+ * @param <T> The <code>Entity</code> to return.
+ */
 public class GetByIdResponse<T> {
     @JsonProperty(value = "_index")
     private String index;
@@ -14,6 +19,9 @@ public class GetByIdResponse<T> {
 
     @JsonProperty(value = "found")
     private Boolean found;
+
+    @JsonProperty(value = "_version")
+    private int version;
 
     @JsonProperty(value = "_source")
     private T source;
@@ -48,6 +56,14 @@ public class GetByIdResponse<T> {
 
     public void setFound(Boolean found) {
         this.found = found;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
     }
 
     public T getSource() {
