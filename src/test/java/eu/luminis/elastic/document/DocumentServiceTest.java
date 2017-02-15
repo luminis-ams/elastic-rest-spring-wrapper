@@ -45,8 +45,8 @@ public class DocumentServiceTest extends ElasticTestCase {
     public void querybyId() throws Exception {
         QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, EXISTING_ID_1);
         request.setTypeReference(new MessageEntityByIdTypeReference());
-
-        MessageEntity entity = documentService.querybyId(request);
+        request.setRefresh(Refresh.NOW);
+        MessageEntity entity = documentService.queryById(request);
 
         assertNotNull(entity);
         assertEquals(EXISTING_ID_1_MESSAGE, entity.getMessage());
@@ -58,7 +58,7 @@ public class DocumentServiceTest extends ElasticTestCase {
         request.setAddId(true);
         request.setTypeReference(new MessageEntityByIdTypeReference());
 
-        MessageEntity entity = documentService.querybyId(request);
+        MessageEntity entity = documentService.queryById(request);
 
         assertNotNull(entity);
         assertEquals(EXISTING_ID_1_MESSAGE, entity.getMessage());
@@ -70,7 +70,7 @@ public class DocumentServiceTest extends ElasticTestCase {
         QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, "non_existing");
         request.setTypeReference(new MessageEntityByIdTypeReference());
         try {
-            documentService.querybyId(request);
+            documentService.queryById(request);
             fail("A QueryByIdNotFoundException should have been thrown");
         } catch (QueryByIdNotFoundException e) {
             assertEquals(INDEX, e.getIndex());
@@ -84,7 +84,7 @@ public class DocumentServiceTest extends ElasticTestCase {
         QueryByIdRequest request = new QueryByIdRequest("NonExisting", TYPE, EXISTING_ID_1);
         request.setTypeReference(new MessageEntityByIdTypeReference());
 
-        documentService.querybyId(request);
+        documentService.queryById(request);
     }
 
     @Test

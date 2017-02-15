@@ -2,8 +2,8 @@ package eu.luminis.elastic.document;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.response.GetByIdResponse;
-import eu.luminis.elastic.index.IndexDocumentException;
 import eu.luminis.elastic.document.response.IndexResponse;
+import eu.luminis.elastic.index.IndexDocumentException;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
@@ -16,7 +16,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
 import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
 
@@ -39,15 +40,16 @@ public class DocumentService {
     /**
      * By specifying the unique identification of an object we can return only that object. If we cannot find the object
      * we throw an {@link QueryByIdNotFoundException}.
+     *
      * @param request Object containing the required parameters
-     * @param <T> Type of the object to be mapped to
+     * @param <T>     Type of the object to be mapped to
      * @return Found object of type T
      */
-    public <T> T querybyId(QueryByIdRequest request) {
+    public <T> T queryById(QueryByIdRequest request) {
         try {
-            Response response = client.performRequest(
-                    "GET",
-                    "/" + request.getIndex() + "/" + request.getType() + "/" + request.getId());
+            String endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
+
+            Response response = client.performRequest("GET", endpoint, getRequestParams(request));
 
             GetByIdResponse<T> queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
 
@@ -64,7 +66,7 @@ public class DocumentService {
             return entity;
         } catch (ResponseException re) {
             if (re.getResponse().getStatusLine().getStatusCode() == 404) {
-                throw new QueryByIdNotFoundException(request.getIndex(),request.getType(),request.getId());
+                throw new QueryByIdNotFoundException(request.getIndex(), request.getType(), request.getId());
             } else {
                 logger.warn("Problem while executing request.", re);
                 throw new QueryExecutionException("Error when executing a document");
@@ -78,27 +80,28 @@ public class DocumentService {
     /**
      * Index the provided document using the provided parameters. If an id is provided we do an update, of no id is
      * provided we do an inset and we return the id.
-     * @param indexRequest Object containing the required parameters
+     *
+     * @param request Object containing the required parameters
      * @return Generated ID
      */
-    public String index(IndexRequest indexRequest) {
+    public String index(IndexRequest request) {
         try {
-            HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(indexRequest.getEntity()), Charset.defaultCharset());
+            HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(request.getEntity()), Charset.defaultCharset());
 
-            Response response;
-            if (indexRequest.getId() != null) {
-                response = client.performRequest(
-                        "PUT",
-                        indexRequest.getIndex() + "/" + indexRequest.getType() + "/" + indexRequest.getId(),
-                        new Hashtable<>(),
-                        requestBody);
+            String method;
+            String endpoint;
+            if (request.getId() != null) {
+                method = "PUT";
+                endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
             } else {
-                response = client.performRequest(
-                        "POST",
-                        indexRequest.getIndex() + "/" + indexRequest.getType(),
-                        new Hashtable<>(),
-                        requestBody);
+                method = "POST";
+                endpoint = String.format("/%s/%s", request.getIndex(), request.getType());
             }
+            Response response = client.performRequest(
+                    method,
+                    endpoint,
+                    getRequestParams(request),
+                    requestBody);
 
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode > 299) {
@@ -118,19 +121,28 @@ public class DocumentService {
 
     /**
      * Removes the document with the provided unique identification.
-     * @param deleteRequest Request object contaning the required parameters
+     *
+     * @param request Request object contaning the required parameters
      * @return Message line that can be used to see if we succeeded.
      */
-    public String remove(DeleteRequest deleteRequest) {
+    public String remove(DeleteRequest request) {
         try {
-            Response response = client.performRequest(
-                    "DELETE",
-                    deleteRequest.getIndex() + "/" + deleteRequest.getType()+ "/" + deleteRequest.getId());
+            String endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
+            Response response = client.performRequest("DELETE", endpoint);
+
             return response.getStatusLine().getReasonPhrase();
         } catch (IOException e) {
             logger.warn("Problem while removing a document.", e);
             throw new IndexDocumentException("Error when removing a document");
         }
+    }
+
+    private Map<String, String> getRequestParams(DocumentRequest request) {
+        Map<String, String> params = new HashMap<>();
+        if (request.getRefresh() != null && !request.getRefresh().equals(Refresh.NONE)) {
+            params.put("refresh", request.getRefresh().getName());
+        }
+        return params;
     }
 
 }
