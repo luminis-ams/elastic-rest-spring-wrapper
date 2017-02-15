@@ -17,11 +17,12 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = RestClientConfig.class)
-public class SearchServiceTest  extends ElasticTestCase {
+public class SearchServiceTest extends ElasticTestCase {
 
     private final static String INDEX = "search_index";
     private final static String TYPE = "search_type";
@@ -64,11 +65,8 @@ public class SearchServiceTest  extends ElasticTestCase {
         MessageEntity messageEntity = new MessageEntity();
         messageEntity.setMessage(message);
 
-        IndexRequest indexRequest = IndexRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setId(id)
-                .setEntity(messageEntity);
+        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, id);
+        indexRequest.setEntity(messageEntity);
 
         documentService.index(indexRequest);
     }

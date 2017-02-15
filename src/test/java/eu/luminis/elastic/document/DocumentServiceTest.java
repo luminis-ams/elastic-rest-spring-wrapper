@@ -4,7 +4,6 @@ import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityByIdTypeReference;
-import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexDocumentException;
 import eu.luminis.elastic.index.IndexService;
 import org.junit.Before;
@@ -14,12 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -46,26 +41,10 @@ public class DocumentServiceTest extends ElasticTestCase {
         indexService.refreshIndexes(INDEX);
     }
 
-    private void indexDocument(String id, String message) {
-        MessageEntity messageEntity = new MessageEntity();
-        messageEntity.setMessage(message);
-
-        IndexRequest indexRequest = IndexRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setId(id)
-                .setEntity(messageEntity);
-
-        documentService.index(indexRequest);
-    }
-
     @Test
     public void querybyId() throws Exception {
-        QueryByIdRequest request = QueryByIdRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setId(EXISTING_ID_1)
-                .setTypeReference(new MessageEntityByIdTypeReference());
+        QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, EXISTING_ID_1);
+        request.setTypeReference(new MessageEntityByIdTypeReference());
 
         MessageEntity entity = documentService.querybyId(request);
 
@@ -75,12 +54,9 @@ public class DocumentServiceTest extends ElasticTestCase {
 
     @Test
     public void querybyId_addId() throws Exception {
-        QueryByIdRequest request = QueryByIdRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setId(EXISTING_ID_1)
-                .setAddId(true)
-                .setTypeReference(new MessageEntityByIdTypeReference());
+        QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, EXISTING_ID_1);
+        request.setAddId(true);
+        request.setTypeReference(new MessageEntityByIdTypeReference());
 
         MessageEntity entity = documentService.querybyId(request);
 
@@ -91,11 +67,8 @@ public class DocumentServiceTest extends ElasticTestCase {
 
     @Test
     public void querybyId_NonExistingId() throws Exception {
-        QueryByIdRequest request = QueryByIdRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setId("non_existing")
-                .setTypeReference(new MessageEntityByIdTypeReference());
+        QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, "non_existing");
+        request.setTypeReference(new MessageEntityByIdTypeReference());
         try {
             documentService.querybyId(request);
             fail("A QueryByIdNotFoundException should have been thrown");
@@ -108,11 +81,8 @@ public class DocumentServiceTest extends ElasticTestCase {
 
     @Test(expected = QueryByIdNotFoundException.class)
     public void querybyId_NonExistingIndex() throws Exception {
-        QueryByIdRequest request = QueryByIdRequest.create()
-                .setIndex("NonExisting")
-                .setType(TYPE)
-                .setId(EXISTING_ID_1)
-                .setTypeReference(new MessageEntityByIdTypeReference());
+        QueryByIdRequest request = new QueryByIdRequest("NonExisting", TYPE, EXISTING_ID_1);
+        request.setTypeReference(new MessageEntityByIdTypeReference());
 
         documentService.querybyId(request);
     }
@@ -122,11 +92,8 @@ public class DocumentServiceTest extends ElasticTestCase {
         MessageEntity entity = new MessageEntity();
         entity.setMessage("An index with an id");
 
-        IndexRequest indexRequest = IndexRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setId("index_1")
-                .setEntity(entity);
+        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, "index_1");
+        indexRequest.setEntity(entity);
 
         String id = documentService.index(indexRequest);
 
@@ -138,10 +105,8 @@ public class DocumentServiceTest extends ElasticTestCase {
         MessageEntity entity = new MessageEntity();
         entity.setMessage("An index without an id");
 
-        IndexRequest indexRequest = IndexRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setEntity(entity);
+        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE);
+        indexRequest.setEntity(entity);
 
         String id = documentService.index(indexRequest);
 
@@ -154,23 +119,30 @@ public class DocumentServiceTest extends ElasticTestCase {
         MessageEntity entity = new MessageEntity();
         entity.setMessage("An index with an id to be deleted");
 
-        IndexRequest indexRequest = IndexRequest.create()
-                .setIndex(INDEX)
-                .setType(TYPE)
-                .setId("delete_id")
-                .setEntity(entity);
+        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, "delete_id");
+        indexRequest.setEntity(entity);
 
         String id = documentService.index(indexRequest);
         assertEquals("delete_id", id);
 
-        String remove = documentService.remove(INDEX, TYPE, id);
+        String remove = documentService.remove(new DeleteRequest(INDEX, TYPE, id));
 
         assertEquals("OK", remove);
     }
 
     @Test(expected = IndexDocumentException.class)
     public void remove_nonExisting() {
-        documentService.remove(INDEX, TYPE, "non_existing_delete");
+        documentService.remove(new DeleteRequest(INDEX, TYPE, "non_existing_delete"));
+    }
+
+    private void indexDocument(String id, String message) {
+        MessageEntity messageEntity = new MessageEntity();
+        messageEntity.setMessage(message);
+
+        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, id);
+        indexRequest.setEntity(messageEntity);
+
+        documentService.index(indexRequest);
     }
 
 }

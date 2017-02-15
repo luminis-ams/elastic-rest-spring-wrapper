@@ -118,17 +118,14 @@ public class DocumentService {
 
     /**
      * Removes the document with the provided unique identification.
-     * @param index String containing the index part
-     * @param type String contaning the type part
-     * @param id String containing the id part
+     * @param deleteRequest Request object contaning the required parameters
      * @return Message line that can be used to see if we succeeded.
      */
-    public String remove(String index, String type, String id) {
+    public String remove(DeleteRequest deleteRequest) {
         try {
             Response response = client.performRequest(
                     "DELETE",
-                    index + "/" + type + "/" + id,
-                    new Hashtable<>());
+                    deleteRequest.getIndex() + "/" + deleteRequest.getType()+ "/" + deleteRequest.getId());
             return response.getStatusLine().getReasonPhrase();
         } catch (IOException e) {
             logger.warn("Problem while removing a document.", e);
