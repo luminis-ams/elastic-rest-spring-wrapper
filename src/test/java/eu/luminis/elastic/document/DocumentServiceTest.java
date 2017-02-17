@@ -4,7 +4,6 @@ import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityByIdTypeReference;
-import eu.luminis.elastic.index.IndexDocumentException;
 import eu.luminis.elastic.index.IndexService;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +14,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -135,6 +135,48 @@ public class DocumentServiceTest extends ElasticTestCase {
         documentService.remove(new DeleteRequest(INDEX, TYPE, "non_existing_delete"));
     }
 
+    @Test
+    public void createDocument() {
+        MessageEntity entity = new MessageEntity();
+        entity.setMessage("An create index with an id");
+
+        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, "create_1");
+        indexRequest.setEntity(entity);
+
+        documentService.index(indexRequest);
+
+        try {
+            documentService.create(indexRequest);
+            fail("An IndexDocumentException should have been thrown");
+        } catch (IndexDocumentException e) {
+            assertTrue(true);
+        }
+    }
+
+    @Test
+    public void updateDocument() {
+        MessageEntity entity = new MessageEntity();
+        entity.setId("test_update");
+
+        IndexRequest indexRequest = new IndexRequest(INDEX,TYPE, "test_update");
+        indexRequest.setEntity(entity);
+        indexRequest.setRefresh(Refresh.NOW);
+        documentService.index(indexRequest);
+
+        entity.setMessage("Updated message");
+
+        UpdateRequest updateRequest = new UpdateRequest(INDEX, TYPE, "test_update");
+        updateRequest.setEntity(entity);
+        documentService.update(updateRequest);
+
+        QueryByIdRequest test_update = new QueryByIdRequest(INDEX, TYPE, "test_update");
+        test_update.setTypeReference(new MessageEntityByIdTypeReference());
+        MessageEntity updatedMessage = documentService.queryById(test_update);
+
+        assertEquals("Updated message", updatedMessage.getMessage());
+    }
+
+    @SuppressWarnings("Duplicates")
     private void indexDocument(String id, String message) {
         MessageEntity messageEntity = new MessageEntity();
         messageEntity.setMessage(message);

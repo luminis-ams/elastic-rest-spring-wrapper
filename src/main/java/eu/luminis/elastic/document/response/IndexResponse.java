@@ -24,6 +24,9 @@ public class IndexResponse {
     @JsonProperty(value = "_shards")
     private Shards shards;
 
+    @JsonProperty(value = "forced_refresh")
+    private Boolean forcedRefresh;
+
     public String getIndex() {
         return index;
     }
@@ -78,5 +81,13 @@ public class IndexResponse {
 
     public void setShards(Shards shards) {
         this.shards = shards;
+    }
+
+    public Boolean getForcedRefresh() {
+        return forcedRefresh;
+    }
+
+    public void setForcedRefresh(Boolean forcedRefresh) {
+        this.forcedRefresh = forcedRefresh;
     }
 }

@@ -1,8 +1,5 @@
-package eu.luminis.elastic.index;
+package eu.luminis.elastic.document;
 
-/**
- * Created by jettrocoenradie on 16/07/16.
- */
 public class IndexDocumentException extends RuntimeException {
     public IndexDocumentException(String message) {
         super(message);

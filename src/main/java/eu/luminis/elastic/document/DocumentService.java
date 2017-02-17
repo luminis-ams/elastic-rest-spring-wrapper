@@ -3,7 +3,6 @@ package eu.luminis.elastic.document;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.response.GetByIdResponse;
 import eu.luminis.elastic.document.response.IndexResponse;
-import eu.luminis.elastic.index.IndexDocumentException;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
@@ -46,6 +45,9 @@ public class DocumentService {
      * @return Found object of type T
      */
     public <T> T queryById(QueryByIdRequest request) {
+        if (request.getTypeReference() == null) {
+            throw new QueryExecutionException("The TypeReference in the request cannot be null");
+        }
         try {
             String endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
 
@@ -85,18 +87,37 @@ public class DocumentService {
      * @return Generated ID
      */
     public String index(IndexRequest request) {
+        String method;
+        String endpoint;
+        if (request.getId() != null) {
+            method = "PUT";
+            endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
+        } else {
+            method = "POST";
+            endpoint = String.format("/%s/%s", request.getIndex(), request.getType());
+        }
+
+        return doIndex(request, method, endpoint);
+    }
+
+    /**
+     * Throws an exception if the provided request contains an id that already exists.
+     *
+     * @param request IndexRequest containing the entity to index
+     * @return The id of the object, which is the same as the one you have provided.
+     */
+    public String create(IndexRequest request) {
+        if (request.getId() == null) {
+            throw new QueryExecutionException("Executing create request without an id");
+        }
+        String method = "PUT";
+        String endpoint = String.format("/%s/%s/%s/_create", request.getIndex(), request.getType(), request.getId());
+        return doIndex(request, method, endpoint);
+    }
+
+    private String doIndex(IndexRequest request, String method, String endpoint) {
         try {
             HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(request.getEntity()), Charset.defaultCharset());
-
-            String method;
-            String endpoint;
-            if (request.getId() != null) {
-                method = "PUT";
-                endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
-            } else {
-                method = "POST";
-                endpoint = String.format("/%s/%s", request.getIndex(), request.getType());
-            }
             Response response = client.performRequest(
                     method,
                     endpoint,
@@ -104,19 +125,21 @@ public class DocumentService {
                     requestBody);
 
             int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode > 299) {
+            if (statusCode == 409) {
+                logger.warn("version conflict, trying to create an existing document?");
+                throw new IndexDocumentException("Document already exists");
+            } else if (statusCode > 299) {
                 logger.warn("Problem while indexing a document: {}", response.getStatusLine().getReasonPhrase());
-                throw new QueryExecutionException("Could not index a document, status code is " + statusCode);
+                throw new IndexDocumentException("Could not index a document, status code is " + statusCode);
             }
 
             IndexResponse queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), IndexResponse.class);
 
             return queryResponse.getId();
         } catch (IOException e) {
-            logger.warn("Problem while executing request.", e);
-            throw new IndexDocumentException("Error when executing a document");
+            logger.warn("Problem while executing request to index a document.", e);
+            throw new IndexDocumentException("Error when indexing a document");
         }
-
     }
 
     /**
@@ -135,6 +158,34 @@ public class DocumentService {
             logger.warn("Problem while removing a document.", e);
             throw new IndexDocumentException("Error when removing a document");
         }
+    }
+
+    public String update(UpdateRequest request) {
+        String method = "POST";
+        String endpoint = String.format("/%s/%s/%s/_update", request.getIndex(), request.getType(), request.getId());
+        WrappedEntity entity = new WrappedEntity(request.getEntity());
+        try {
+            HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(entity), Charset.defaultCharset());
+            Response response = client.performRequest(
+                    method,
+                    endpoint,
+                    getRequestParams(request),
+                    requestBody);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode > 299) {
+                logger.warn("Problem while updating a document: {}", response.getStatusLine().getReasonPhrase());
+                throw new IndexDocumentException("Could not update a document, status code is " + statusCode);
+            }
+
+            IndexResponse queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), IndexResponse.class);
+
+            return queryResponse.getId();
+        } catch (IOException e) {
+            logger.warn("Problem while executing request to update a document.", e);
+            throw new IndexDocumentException("Error when updating a document");
+        }
+
     }
 
     private Map<String, String> getRequestParams(DocumentRequest request) {
