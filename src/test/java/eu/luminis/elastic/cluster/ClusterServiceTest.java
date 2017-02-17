@@ -1,6 +1,7 @@
 package eu.luminis.elastic.cluster;
 
 import eu.luminis.elastic.RestClientConfig;
+import eu.luminis.elastic.TestConfig;
 import eu.luminis.elastic.cluster.response.ClusterHealth;
 import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.index.IndexService;
@@ -13,7 +14,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = RestClientConfig.class)
+@ContextConfiguration(classes = {RestClientConfig.class, TestConfig.class})
 public class ClusterServiceTest extends ElasticTestCase {
 
     @Autowired

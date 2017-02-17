@@ -8,6 +8,7 @@ import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.transport.Netty4Plugin;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -22,6 +23,7 @@ public abstract class ElasticTestCase {
                 .put("path.home", "target/elasticsearch")
                 .put("transport.type", "local")
                 .put("http.enabled", true)
+                .put("http.port", 19200)
                 .build();
 
         Collection plugins = Collections.singletonList(Netty4Plugin.class);
