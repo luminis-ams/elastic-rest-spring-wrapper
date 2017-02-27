@@ -61,6 +61,13 @@ public class SearchServiceTest extends ElasticTestCase {
         assertTrue(ids.contains("elastic_2"));
     }
 
+    @Test
+    public void countByIndex() {
+        long countByIndex = searchService.countByIndex(INDEX);
+
+        assertEquals(2L, countByIndex);
+    }
+
     private void indexDocument(String id, String message) {
         MessageEntity messageEntity = new MessageEntity();
         messageEntity.setMessage(message);

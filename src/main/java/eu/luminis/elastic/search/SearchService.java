@@ -2,6 +2,7 @@ package eu.luminis.elastic.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.QueryExecutionException;
+import eu.luminis.elastic.search.response.CountResponse;
 import eu.luminis.elastic.search.response.QueryResponse;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
@@ -71,5 +72,23 @@ public class SearchService {
 
     }
 
+    /**
+     * Returns the number of documents in the specified index
+     * @param indexName
+     * @return
+     */
+    public Long countByIndex(String indexName) {
+        try {
+            Response response = client.performRequest(
+                    "GET",
+                    indexName + "/_count");
 
+            return jacksonObjectMapper.readValue(response.getEntity().getContent(), CountResponse.class).getCount();
+
+        } catch (IOException e) {
+            logger.warn("Problem while executing count request.", e);
+            throw new QueryExecutionException("Error when executing count request");
+        }
+
+    }
 }
