@@ -1,6 +1,7 @@
 package eu.luminis.elastic.search;
 
 import eu.luminis.elastic.ElasticTestCase;
+import eu.luminis.elastic.IndexDocumentHelper;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.DocumentService;
 import eu.luminis.elastic.document.IndexRequest;
@@ -31,15 +32,15 @@ public class SearchServiceTest extends ElasticTestCase {
     private SearchService searchService;
 
     @Autowired
-    private DocumentService documentService;
+    private IndexService indexService;
 
     @Autowired
-    private IndexService indexService;
+    private IndexDocumentHelper indexDocumentHelper;
 
     @Before
     public void setUp() throws Exception {
-        indexDocument("elastic_1", "This is a document about elastic");
-        indexDocument("elastic_2", "Another document about elastic");
+        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_1", "This is a document about elastic");
+        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_2", "Another document about elastic");
         indexService.refreshIndexes(INDEX);
     }
 
@@ -66,16 +67,6 @@ public class SearchServiceTest extends ElasticTestCase {
         long countByIndex = searchService.countByIndex(INDEX);
 
         assertEquals(2L, countByIndex);
-    }
-
-    private void indexDocument(String id, String message) {
-        MessageEntity messageEntity = new MessageEntity();
-        messageEntity.setMessage(message);
-
-        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, id);
-        indexRequest.setEntity(messageEntity);
-
-        documentService.index(indexRequest);
     }
 
 }

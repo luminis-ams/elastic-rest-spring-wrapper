@@ -12,4 +12,9 @@ public class TestConfig {
     public ObjectMapper objectMapper() {
         return new ObjectMapper();
     }
+
+    @Bean
+    public IndexDocumentHelper indexDocumentHelper() {
+        return new IndexDocumentHelper();
+    }
 }

@@ -1,6 +1,7 @@
 package eu.luminis.elastic.document;
 
 import eu.luminis.elastic.ElasticTestCase;
+import eu.luminis.elastic.IndexDocumentHelper;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityByIdTypeReference;
@@ -32,11 +33,14 @@ public class DocumentServiceTest extends ElasticTestCase {
     @Autowired
     private IndexService indexService;
 
+    @Autowired
+    private IndexDocumentHelper indexDocumentHelper;
+
     @Before
     public void setUp() throws Exception {
-        indexDocument(EXISTING_ID_1, EXISTING_ID_1_MESSAGE);
-        indexDocument("elastic_1", "This is a document about elastic");
-        indexDocument("elastic_2", "Another document about elastic");
+        indexDocumentHelper.indexDocument(INDEX,TYPE, EXISTING_ID_1, EXISTING_ID_1_MESSAGE);
+        indexDocumentHelper.indexDocument(INDEX,TYPE, "elastic_1", "This is a document about elastic");
+        indexDocumentHelper.indexDocument(INDEX,TYPE, "elastic_2", "Another document about elastic");
 
         indexService.refreshIndexes(INDEX);
     }
@@ -174,17 +178,6 @@ public class DocumentServiceTest extends ElasticTestCase {
         MessageEntity updatedMessage = documentService.queryById(test_update);
 
         assertEquals("Updated message", updatedMessage.getMessage());
-    }
-
-    @SuppressWarnings("Duplicates")
-    private void indexDocument(String id, String message) {
-        MessageEntity messageEntity = new MessageEntity();
-        messageEntity.setMessage(message);
-
-        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, id);
-        indexRequest.setEntity(messageEntity);
-
-        documentService.index(indexRequest);
     }
 
 }
