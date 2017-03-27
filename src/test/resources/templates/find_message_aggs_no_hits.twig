@@ -1,0 +1,22 @@
+{
+    "query":{
+{% if (length(message)==0) %}
+        "match_all": {}
+{% else %}
+        "match":{
+            "message": {
+                "query": "{{ message }}",
+                "operator": "{{ default(operator, 'or') }}"
+            }
+        }
+{% endif %}
+    },
+    "aggs": {
+        "byTags": {
+            "terms": {
+                "field": "tags"
+            }
+        }
+    },
+    "size": 0
+}

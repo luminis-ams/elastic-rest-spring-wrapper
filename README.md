@@ -127,6 +127,27 @@ public List<Employee> queryForEmployeesByNameAndEmail(String searchString) {
 }
 ```
 
+# Using aggregations
+This is mainly the same as for searching for documents. You do have to configure the ObjectMapper though. For now you have to do this yourself. Later on I'll try to make this easier. Below is a configuration for an ObjectMapper that you can use as a template. You can find a running example in the test class _SearchServiceAggsTest_ and in the _TestConfig_
+
+```$java
+@Bean
+public ObjectMapper objectMapper() {
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    AggregationDeserializer deserializer = new AggregationDeserializer();
+    deserializer.register("byTags", TermsAggregation.class);
+
+    SimpleModule module = new SimpleModule("AggregationDeserializer",
+            new Version(1, 0, 0, null, "eu.luminis.elastic", "aggregation-elastic"));
+    module.addDeserializer(Aggregation.class, deserializer);
+
+    objectMapper.registerModule(module);
+    return objectMapper;
+}
+```
+
+
 # deploying an artifacts
 The command to upload an artifact is:
 ```
@@ -137,3 +158,9 @@ Of course this can only be done with the appropriate rights, so change your sett
 
 If you remove the *-SNAPHOT* from the version, it will become a release. ANd if you add it again 
 it will become a snapshot again.
+
+# References
+These are some interesting not so obvious blog posts that helped me during the creation of this library:
+
+Help with using Jackson for object deserialization
+http://www.robinhowlett.com/blog/2015/03/19/custom-jackson-polymorphic-deserialization-without-type-metadata/

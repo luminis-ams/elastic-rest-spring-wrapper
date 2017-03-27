@@ -3,6 +3,7 @@ package eu.luminis.elastic.search;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.QueryExecutionException;
 import eu.luminis.elastic.search.response.CountResponse;
+import eu.luminis.elastic.search.response.HitsAggsResponse;
 import eu.luminis.elastic.search.response.QueryResponse;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
@@ -47,35 +48,49 @@ public class SearchService {
         Assert.notNull(request, "Need to provide a SearchByTemplateRequest object");
 
         try {
-            Response response = client.performRequest(
-                    "GET",
-                    request.getIndexName() + "/_search",
-                    new HashMap<>(),
-                    new StringEntity(request.createQuery(), Charset.defaultCharset()));
+            QueryResponse<T> queryResponse = doExecuteQuery(request);
 
-            QueryResponse<T> queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
-
-            List<T> result = new ArrayList<>();
-            queryResponse.getHits().getHits().forEach(tHit -> {
-                T source = tHit.getSource();
-                if (request.getAddId()) {
-                    addIdToEntity(tHit.getId(), source);
-                }
-                result.add(source);
-            });
+            List<T> result = extractHitsByType(request, queryResponse);
 
             return result;
         } catch (IOException e) {
             logger.warn("Problem while executing request.", e);
             throw new QueryExecutionException("Error when executing a document");
         }
+    }
+
+    /**
+     * Executes a search request with the provided query, but expects an aggregation part in the query. It will not
+     * fail in case you do not provide an aggregation.
+     * @param request Object containing the required parameters to execute the request
+     * @param <T> Type of resulting objects, must be mapped from json result into java entity
+     * @return Object containing the list of objects and/or the aggregations
+     */
+    public <T> HitsAggsResponse<T> aggsByTemplate(SearchByTemplateRequest request) {
+        Assert.notNull(request, "Need to provide a SearchByTemplateRequest object");
+
+        try {
+            QueryResponse<T> queryResponse = doExecuteQuery(request);
+
+            List<T> hits = extractHitsByType(request, queryResponse);
+
+            // Now Add the aggregations
+            HitsAggsResponse<T> hitsAggsResponse = new HitsAggsResponse<T>();
+            hitsAggsResponse.setHits(hits);
+            hitsAggsResponse.setAggregations(queryResponse.getAggregations());
+            return hitsAggsResponse;
+        } catch (IOException e) {
+            logger.warn("Problem while executing request.", e);
+            throw new QueryExecutionException("Error when executing a document");
+        }
+
 
     }
 
     /**
      * Returns the number of documents in the specified index
-     * @param indexName
-     * @return
+     * @param indexName The name of the index to use for counting documents
+     * @return Long representing the number of documents in the provided index.
      */
     public Long countByIndex(String indexName) {
         try {
@@ -90,5 +105,27 @@ public class SearchService {
             throw new QueryExecutionException("Error when executing count request");
         }
 
+    }
+
+    private <T> QueryResponse<T> doExecuteQuery(SearchByTemplateRequest request) throws IOException {
+        Response response = client.performRequest(
+                "GET",
+                request.getIndexName() + "/_search",
+                new HashMap<>(),
+                new StringEntity(request.createQuery(), Charset.defaultCharset()));
+
+        return jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
+    }
+
+    private <T> List<T> extractHitsByType(SearchByTemplateRequest request, QueryResponse<T> queryResponse) {
+        List<T> hits = new ArrayList<>();
+        queryResponse.getHits().getHits().forEach(tHit -> {
+            T source = tHit.getSource();
+            if (request.getAddId()) {
+                addIdToEntity(tHit.getId(), source);
+            }
+            hits.add(source);
+        });
+        return hits;
     }
 }

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.luminis.elastic.document.response.Hits;
 import eu.luminis.elastic.document.response.Shards;
 
+import java.util.Map;
+
 
 public class QueryResponse<T> {
     private Long took;
@@ -15,6 +17,8 @@ public class QueryResponse<T> {
     private Shards shards;
 
     private Hits<T> hits;
+
+    private Map<String,Aggregation> aggregations;
 
     /* Getters / Setters */
     public Hits<T> getHits() {
@@ -47,5 +51,13 @@ public class QueryResponse<T> {
 
     public void setTimedOut(Boolean timedOut) {
         this.timedOut = timedOut;
+    }
+
+    public Map<String, Aggregation> getAggregations() {
+        return aggregations;
+    }
+
+    public void setAggregations(Map<String, Aggregation> aggregations) {
+        this.aggregations = aggregations;
     }
 }
