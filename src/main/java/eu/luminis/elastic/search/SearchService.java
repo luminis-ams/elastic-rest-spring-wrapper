@@ -50,9 +50,7 @@ public class SearchService {
         try {
             QueryResponse<T> queryResponse = doExecuteQuery(request);
 
-            List<T> result = extractHitsByType(request, queryResponse);
-
-            return result;
+            return extractHitsByType(request, queryResponse);
         } catch (IOException e) {
             logger.warn("Problem while executing request.", e);
             throw new QueryExecutionException("Error when executing a document");
@@ -75,7 +73,7 @@ public class SearchService {
             List<T> hits = extractHitsByType(request, queryResponse);
 
             // Now Add the aggregations
-            HitsAggsResponse<T> hitsAggsResponse = new HitsAggsResponse<T>();
+            HitsAggsResponse<T> hitsAggsResponse = new HitsAggsResponse<>();
             hitsAggsResponse.setHits(hits);
             hitsAggsResponse.setAggregations(queryResponse.getAggregations());
             return hitsAggsResponse;

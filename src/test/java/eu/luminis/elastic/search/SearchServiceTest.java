@@ -39,8 +39,8 @@ public class SearchServiceTest extends ElasticTestCase {
 
     @Before
     public void setUp() throws Exception {
-        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_1", "This is a document about elastic");
-        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_2", "Another document about elastic");
+        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_1", "This is a document about elastic", 2000L);
+        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_2", "Another document about elastic", 2000L);
         indexService.refreshIndexes(INDEX);
     }
 

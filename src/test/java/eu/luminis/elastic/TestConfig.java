@@ -1,17 +1,13 @@
 package eu.luminis.elastic;
 
-import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import eu.luminis.elastic.search.AggregationConfig;
-import eu.luminis.elastic.search.response.Aggregation;
-import eu.luminis.elastic.search.response.AggregationDeserializer;
+import eu.luminis.elastic.search.response.DateHistogramAggregation;
+import eu.luminis.elastic.search.response.HistogramAggregation;
 import eu.luminis.elastic.search.response.TermsAggregation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
-
-import java.util.HashMap;
 
 @Configuration
 @PropertySource("classpath:test.properties")
@@ -21,6 +17,8 @@ public class TestConfig {
     public AggregationConfig aggregationConfig() {
         AggregationConfig config = new AggregationConfig();
         config.addConfig("byTags", TermsAggregation.class);
+        config.addConfig("byHistogram", HistogramAggregation.class);
+        config.addConfig("byDateHistogram", DateHistogramAggregation.class);
 
         return config;
     }

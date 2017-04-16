@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by jettrocoenradie on 27/03/2017.
+ * Main response class for aggregations response. Can contain hits and aggregations
  */
 public class HitsAggsResponse<T> {
     private List<T> hits;
