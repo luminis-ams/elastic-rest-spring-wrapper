@@ -128,23 +128,19 @@ public List<Employee> queryForEmployeesByNameAndEmail(String searchString) {
 ```
 
 # Using aggregations
-This is mainly the same as for searching for documents. You do have to configure the ObjectMapper though. For now you have to do this yourself. Later on I'll try to make this easier. Below is a configuration for an ObjectMapper that you can use as a template. You can find a running example in the test class _SearchServiceAggsTest_ and in the _TestConfig_
+This is mainly the same as for searching for documents. You do have to configure the ObjectMapper though. To help you do this we have created a helper class _AggregationConfig_. In this class you provide a mapping from names of aggregations to the to the specific types of the aggregations. Beware that
+you should not reuse aggregation names in your queries for different types.
 
 ```$java
-@Bean
-public ObjectMapper objectMapper() {
-    ObjectMapper objectMapper = new ObjectMapper();
+    @Bean
+    public AggregationConfig aggregationConfig() {
+        AggregationConfig config = new AggregationConfig();
+        config.addConfig("termsByTags", TermsAggregation.class);
+        config.addConfig("histoByYear", HistogramAggregation.class);
+        config.addConfig("dateHistoByCreated", DateHistogramAggregation.class);
 
-    AggregationDeserializer deserializer = new AggregationDeserializer();
-    deserializer.register("byTags", TermsAggregation.class);
-
-    SimpleModule module = new SimpleModule("AggregationDeserializer",
-            new Version(1, 0, 0, null, "eu.luminis.elastic", "aggregation-elastic"));
-    module.addDeserializer(Aggregation.class, deserializer);
-
-    objectMapper.registerModule(module);
-    return objectMapper;
-}
+        return config;
+    }
 ```
 
 
