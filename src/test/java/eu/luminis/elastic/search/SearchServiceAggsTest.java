@@ -176,6 +176,8 @@ public class SearchServiceAggsTest extends ElasticTestCase {
         HitsAggsResponse<MessageEntity> response = searchService.aggsByTemplate(request);
 
         assertEquals(0, response.getHits().size());
+        assertEquals(4, response.getTotalHits());
+
         Aggregation byDateHistogram = response.getAggregations().get("byDateHistogram");
         assertNotNull(byDateHistogram);
         assertTrue(byDateHistogram instanceof DateHistogramAggregation);
