@@ -9,6 +9,7 @@ import java.util.Map;
 public class HitsAggsResponse<T> {
     private List<T> hits;
     private Map<String, Aggregation> aggregations;
+    private long totalHits;
 
     public List<T> getHits() {
         return hits;
@@ -24,5 +25,13 @@ public class HitsAggsResponse<T> {
 
     public void setAggregations(Map<String, Aggregation> aggregations) {
         this.aggregations = aggregations;
+    }
+
+    public long getTotalHits() {
+        return totalHits;
+    }
+
+    public void setTotalHits(long totalHits) {
+        this.totalHits = totalHits;
     }
 }

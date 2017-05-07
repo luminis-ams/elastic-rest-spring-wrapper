@@ -69,6 +69,7 @@ public class SearchService {
 
         try {
             QueryResponse<T> queryResponse = doExecuteQuery(request);
+            long totalHits = queryResponse.getHits().getTotal();
 
             List<T> hits = extractHitsByType(request, queryResponse);
 
@@ -76,6 +77,7 @@ public class SearchService {
             HitsAggsResponse<T> hitsAggsResponse = new HitsAggsResponse<>();
             hitsAggsResponse.setHits(hits);
             hitsAggsResponse.setAggregations(queryResponse.getAggregations());
+            hitsAggsResponse.setTotalHits(totalHits);
             return hitsAggsResponse;
         } catch (IOException e) {
             logger.warn("Problem while executing request.", e);
