@@ -19,31 +19,35 @@ public class DocumentRequest {
         return index;
     }
 
-    public void setIndex(String index) {
+    public DocumentRequest setIndex(String index) {
         this.index = index;
+        return this;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public DocumentRequest setType(String type) {
         this.type = type;
+        return this;
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public DocumentRequest setId(String id) {
         this.id = id;
+        return this;
     }
 
     public Refresh getRefresh() {
         return refresh;
     }
 
-    public void setRefresh(Refresh refresh) {
+    public DocumentRequest setRefresh(Refresh refresh) {
         this.refresh = refresh;
+        return this;
     }
 }
