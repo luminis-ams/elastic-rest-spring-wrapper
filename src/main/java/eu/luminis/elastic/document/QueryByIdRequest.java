@@ -23,15 +23,17 @@ public class QueryByIdRequest extends DocumentRequest {
         return typeReference;
     }
 
-    public void setTypeReference(TypeReference typeReference) {
+    public QueryByIdRequest setTypeReference(TypeReference typeReference) {
         this.typeReference = typeReference;
+        return this;
     }
 
     public Boolean getAddId() {
         return addId;
     }
 
-    public void setAddId(Boolean addId) {
+    public QueryByIdRequest setAddId(Boolean addId) {
         this.addId = addId;
+        return this;
     }
 }

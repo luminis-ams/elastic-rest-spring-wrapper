@@ -17,7 +17,8 @@ public class UpdateRequest extends DocumentRequest {
         return entity;
     }
 
-    public void setEntity(Object entity) {
+    public UpdateRequest setEntity(Object entity) {
         this.entity = entity;
+        return this;
     }
 }
