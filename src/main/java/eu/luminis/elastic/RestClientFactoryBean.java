@@ -25,6 +25,9 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
 
     private Sniffer sniffer;
 
+    @Value("${enableSniffer:true}")
+    private boolean enableSniffer = true;
+
     @Autowired
     public RestClientFactoryBean(LoggingFailureListener loggingFailureListener) {
         this.loggingFailureListener = loggingFailureListener;
@@ -46,8 +49,9 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
                 .setFailureListener(loggingFailureListener)
                 .build();
 
-        this.sniffer = Sniffer.builder(restClient).build();
-
+        if (enableSniffer) {
+            this.sniffer = Sniffer.builder(restClient).build();
+        }
         return restClient;
     }
 
@@ -56,7 +60,9 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
         try {
             logger.info("Closing the elasticsearch sniffer");
             instance.close();
-            this.sniffer.close();
+            if (enableSniffer) {
+                this.sniffer.close();
+            }
         } catch (IOException e) {
             logger.warn("Failed to close the elasticsearch sniffer");
         }

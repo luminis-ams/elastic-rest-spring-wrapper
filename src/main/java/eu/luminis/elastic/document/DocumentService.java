@@ -81,7 +81,7 @@ public class DocumentService {
 
     /**
      * Index the provided document using the provided parameters. If an id is provided we do an update, of no id is
-     * provided we do an inset and we return the id.
+     * provided we do an insert and we return the id.
      *
      * @param request Object containing the required parameters
      * @return Generated ID
