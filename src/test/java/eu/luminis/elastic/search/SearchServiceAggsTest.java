@@ -7,6 +7,7 @@ import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexService;
 import eu.luminis.elastic.search.response.Aggregation;
+import eu.luminis.elastic.search.response.CalculatedTermsAggregation;
 import eu.luminis.elastic.search.response.DateHistogramAggregation;
 import eu.luminis.elastic.search.response.DateHistogramBucket;
 import eu.luminis.elastic.search.response.HistogramAggregation;
@@ -23,9 +24,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalUnit;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -140,6 +139,37 @@ public class SearchServiceAggsTest extends ElasticTestCase {
         assertTrue(byTags instanceof TermsAggregation);
         TermsAggregation termsbyTags = (TermsAggregation) byTags;
         assertEquals(3, termsbyTags.getBuckets().size());
+    }
+
+    @Test
+    public void calculateAvgYearPerTag() {
+        SearchByTemplateRequest request = SearchByTemplateRequest.create()
+                .setIndexName(TEST_AGGS)
+                .setTemplateName("terms_calculated.twig")
+                .setAddId(true)
+                .setTypeReference(new MessageEntityTypeReference());
+
+        HitsAggsResponse<MessageEntity> response = searchService.aggsByTemplate(request);
+
+        assertEquals(0, response.getHits().size());
+        Aggregation calcTerms = response.getAggregations().get("calcTerms");
+        assertNotNull(calcTerms);
+        assertTrue(calcTerms instanceof CalculatedTermsAggregation);
+        CalculatedTermsAggregation calculatedTermsAggregation = (CalculatedTermsAggregation) calcTerms;
+        assertEquals(3, calculatedTermsAggregation.getBuckets().size());
+        calculatedTermsAggregation.getBuckets().forEach(bucket -> {
+            switch (bucket.getKey()) {
+                case "news":
+                    assertEquals((1970D + 1985D) / 2D, bucket.getCalculated().getValue(), 0.01);
+                    break;
+                case "blog":
+                    assertEquals(1980D, bucket.getCalculated().getValue(), 0.01);
+                    break;
+                case "twitter":
+                    assertEquals(2000D, bucket.getCalculated().getValue(), 0.01);
+                    break;
+            }
+        });
     }
 
     @Test
