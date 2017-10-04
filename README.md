@@ -11,7 +11,7 @@ Add this repository to your pom:
 <repository>
     <id>luminis</id>
     <name>Snapshots</name>
-    <url>https://npm.luminis-ams.nl/repository/maven-public</url>
+    <url>https://repository.luminis.amsterdam/repository/maven-public</url>
 </repository>
 ```
 
@@ -20,7 +20,7 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.0.2</version>
+    <version>0.6.0</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.7.0-SNAPSHOT</version>
 </dependency>
 ```
 
