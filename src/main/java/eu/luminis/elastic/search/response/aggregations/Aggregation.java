@@ -1,4 +1,4 @@
-package eu.luminis.elastic.search.response;
+package eu.luminis.elastic.search.response.aggregations;
 
 /**
  * Parent interface for all different type of aggregations. The only thing each aggregation has is a name.

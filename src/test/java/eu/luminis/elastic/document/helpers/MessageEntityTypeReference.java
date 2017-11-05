@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import eu.luminis.elastic.search.response.QueryResponse;
 
 /**
- * Created by jettrocoenradie on 13/02/2017.
+ * Type reference required to make use of Jackson and nested entities.
  */
 public class MessageEntityTypeReference extends TypeReference<QueryResponse<MessageEntity>> {
 }

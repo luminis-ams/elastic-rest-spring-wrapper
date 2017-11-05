@@ -1,6 +1,7 @@
-package eu.luminis.elastic.search.response;
+package eu.luminis.elastic.search.response.aggregations.bucket;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.luminis.elastic.search.response.aggregations.bucket.Bucket;
 
 /**
  * Specific bucket implementation for Date Histogram Aggregations.

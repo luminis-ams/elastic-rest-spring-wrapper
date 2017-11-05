@@ -20,7 +20,7 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.2</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.7.0-SNAPSHOT</version>
+    <version>0.8.0-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -128,21 +128,21 @@ public List<Employee> queryForEmployeesByNameAndEmail(String searchString) {
 ```
 
 # Using aggregations
-This is mainly the same as for searching for documents. You do have to configure the ObjectMapper though. To help you do this we have created a helper class _AggregationConfig_. In this class you provide a mapping from names of aggregations to the to the specific types of the aggregations. Beware that
-you should not reuse aggregation names in your queries for different types.
+This is mainly the same as for searching for documents. We do expect a Jackson ObjectMapper bean to be present. Usually spring takes care of this. If not, you have to provide one by yourself.
 
-```$java
-    @Bean
-    public AggregationConfig aggregationConfig() {
-        AggregationConfig config = new AggregationConfig();
-        config.addConfig("termsByTags", TermsAggregation.class);
-        config.addConfig("histoByYear", HistogramAggregation.class);
-        config.addConfig("dateHistoByCreated", DateHistogramAggregation.class);
+The aggregation responses can be divided into two groups. The Bucket aggregations and the Metric Aggregations. Not all aggregations are supported at the moment. Below is a list we do support at the moment:
+## Bucket Aggregations
+- Terms
+- Histogram
+- Date Histogram
 
-        return config;
-    }
-```
-
+## Metric Aggregations
+- Avg
+- Sum
+- Max
+- Min
+- Cardinality
+- Value Count
 
 # deploying an artifacts
 The command to upload an artifact is:

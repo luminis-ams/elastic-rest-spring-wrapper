@@ -1,13 +1,14 @@
-package eu.luminis.elastic.search.response;
+package eu.luminis.elastic.search.response.aggregations.bucket;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.luminis.elastic.search.response.aggregations.Aggregation;
 
 import java.util.List;
 
 /**
- * Created by jettrocoenradie on 19/05/2017.
+ * Terms aggregation specific response
  */
-public class CalculatedTermsAggregation extends Aggregation {
+public class TermsAggregation extends Aggregation {
     @JsonProperty("doc_count_error_upper_bound")
     private Long docCountErrorUpperBound;
 
@@ -15,7 +16,7 @@ public class CalculatedTermsAggregation extends Aggregation {
     private Long sumOtherDocCount;
 
     @JsonProperty("buckets")
-    private List<CalculatedTermsBucket> buckets;
+    private List<TermsBucket> buckets;
 
     public Long getDocCountErrorUpperBound() {
         return docCountErrorUpperBound;
@@ -33,12 +34,11 @@ public class CalculatedTermsAggregation extends Aggregation {
         this.sumOtherDocCount = sumOtherDocCount;
     }
 
-    public List<CalculatedTermsBucket> getBuckets() {
+    public List<TermsBucket> getBuckets() {
         return buckets;
     }
 
-    public void setBuckets(List<CalculatedTermsBucket> buckets) {
+    public void setBuckets(List<TermsBucket> buckets) {
         this.buckets = buckets;
     }
-
 }

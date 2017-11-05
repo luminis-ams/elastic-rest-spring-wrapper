@@ -2,7 +2,7 @@ package eu.luminis.elastic.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.QueryExecutionException;
-import eu.luminis.elastic.search.response.CountResponse;
+import eu.luminis.elastic.search.response.aggregations.metric.MetricResponse;
 import eu.luminis.elastic.search.response.HitsAggsResponse;
 import eu.luminis.elastic.search.response.QueryResponse;
 import org.apache.http.entity.StringEntity;
@@ -19,7 +19,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static eu.luminis.elastic.RequestMethod.GET;
 import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
 
 /**
@@ -40,8 +42,9 @@ public class SearchService {
 
     /**
      * Executes a search query using the provided template
+     *
      * @param request Object containing the required parameters to execute the request
-     * @param <T> Type of resulting objects, must be mapped from json result into java entity
+     * @param <T>     Type of resulting objects, must be mapped from json result into java entity
      * @return List of mapped objects
      */
     public <T> List<T> queryByTemplate(SearchByTemplateRequest request) {
@@ -60,8 +63,9 @@ public class SearchService {
     /**
      * Executes a search request with the provided query, but expects an aggregation part in the query. It will not
      * fail in case you do not provide an aggregation.
+     *
      * @param request Object containing the required parameters to execute the request
-     * @param <T> Type of resulting objects, must be mapped from json result into java entity
+     * @param <T>     Type of resulting objects, must be mapped from json result into java entity
      * @return Object containing the list of objects and/or the aggregations
      */
     public <T> HitsAggsResponse<T> aggsByTemplate(SearchByTemplateRequest request) {
@@ -89,16 +93,15 @@ public class SearchService {
 
     /**
      * Returns the number of documents in the specified index
+     *
      * @param indexName The name of the index to use for counting documents
      * @return Long representing the number of documents in the provided index.
      */
     public Long countByIndex(String indexName) {
         try {
-            Response response = client.performRequest(
-                    "GET",
-                    indexName + "/_count");
+            Response response = client.performRequest(GET, indexName + "/_count");
 
-            return jacksonObjectMapper.readValue(response.getEntity().getContent(), CountResponse.class).getCount();
+            return jacksonObjectMapper.readValue(response.getEntity().getContent(), MetricResponse.class).getCount();
 
         } catch (IOException e) {
             logger.warn("Problem while executing count request.", e);
@@ -108,10 +111,12 @@ public class SearchService {
     }
 
     private <T> QueryResponse<T> doExecuteQuery(SearchByTemplateRequest request) throws IOException {
+        Map<String, String> params = new HashMap<>();
+        params.put("typed_keys", null);
         Response response = client.performRequest(
-                "GET",
+                GET,
                 request.getIndexName() + "/_search",
-                new HashMap<>(),
+                params,
                 new StringEntity(request.createQuery(), Charset.defaultCharset()));
 
         return jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());

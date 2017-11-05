@@ -1,9 +1,9 @@
-package eu.luminis.elastic.search.response;
+package eu.luminis.elastic.search.response.aggregations.metric;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.luminis.elastic.document.response.Shards;
 
-public class CountResponse {
+public class MetricResponse {
     @JsonProperty(value = "_shards")
     private Shards shards;
 

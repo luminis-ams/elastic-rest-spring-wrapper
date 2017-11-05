@@ -18,6 +18,10 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
+import static eu.luminis.elastic.RequestMethod.DELETE;
+import static eu.luminis.elastic.RequestMethod.GET;
+import static eu.luminis.elastic.RequestMethod.POST;
+import static eu.luminis.elastic.RequestMethod.PUT;
 import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
 
 /**
@@ -49,9 +53,9 @@ public class DocumentService {
             throw new QueryExecutionException("The TypeReference in the request cannot be null");
         }
         try {
-            String endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
+            String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
 
-            Response response = client.performRequest("GET", endpoint, getRequestParams(request));
+            Response response = client.performRequest(GET, endpoint, getRequestParams(request));
 
             GetByIdResponse<T> queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
 
@@ -90,11 +94,11 @@ public class DocumentService {
         String method;
         String endpoint;
         if (request.getId() != null) {
-            method = "PUT";
-            endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
+            method = PUT;
+            endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
         } else {
-            method = "POST";
-            endpoint = String.format("/%s/%s", request.getIndex(), request.getType());
+            method = POST;
+            endpoint = createGenerateIdEndpointString(request.getIndex(), request.getType());
         }
 
         return doIndex(request, method, endpoint);
@@ -110,8 +114,8 @@ public class DocumentService {
         if (request.getId() == null) {
             throw new QueryExecutionException("Executing create request without an id");
         }
-        String method = "PUT";
-        String endpoint = String.format("/%s/%s/%s/_create", request.getIndex(), request.getType(), request.getId());
+        String method = PUT;
+        String endpoint = createEndpointCreateString(request.getIndex(), request.getType(), request.getId());
         return doIndex(request, method, endpoint);
     }
 
@@ -150,8 +154,8 @@ public class DocumentService {
      */
     public String remove(DeleteRequest request) {
         try {
-            String endpoint = String.format("/%s/%s/%s", request.getIndex(), request.getType(), request.getId());
-            Response response = client.performRequest("DELETE", endpoint);
+            String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
+            Response response = client.performRequest(DELETE, endpoint);
 
             return response.getStatusLine().getReasonPhrase();
         } catch (IOException e) {
@@ -161,8 +165,8 @@ public class DocumentService {
     }
 
     public String update(UpdateRequest request) {
-        String method = "POST";
-        String endpoint = String.format("/%s/%s/%s/_update", request.getIndex(), request.getType(), request.getId());
+        String method = POST;
+        String endpoint = createEndpointUpdateString(request.getIndex(), request.getType(), request.getId());
         WrappedEntity entity = new WrappedEntity(request.getEntity());
         try {
             HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(entity), Charset.defaultCharset());
@@ -194,6 +198,22 @@ public class DocumentService {
             params.put("refresh", request.getRefresh().getName());
         }
         return params;
+    }
+
+    private String createEndpointString(String index, String type, String id) {
+        return String.format("/%s/%s/%s", index, type, id);
+    }
+
+    private String createGenerateIdEndpointString(String index, String type) {
+        return String.format("/%s/%s", index, type);
+    }
+
+    private String createEndpointCreateString(String index, String type, String id) {
+        return String.format("/%s/%s/%s/_create", index, type, id);
+    }
+
+    private String createEndpointUpdateString(String index, String type, String id) {
+        return String.format("/%s/%s/%s/_update", index, type, id);
     }
 
 }

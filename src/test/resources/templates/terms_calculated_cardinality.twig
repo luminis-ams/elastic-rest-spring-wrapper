@@ -1,0 +1,18 @@
+{
+    "aggs": {
+        "calcTerms": {
+            "terms": {
+                "field": "tags",
+                "size": 25
+            },
+            "aggs": {
+                "calculated": {
+                    "cardinality": {
+                        "field": "year"
+                    }
+                }
+            }
+        }
+    },
+    "size": 0
+}

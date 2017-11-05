@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
+import static eu.luminis.elastic.RequestMethod.GET;
+
 /**
  * Service that provides access to the eu.luminis.elastic cluster services.
  */
@@ -35,10 +37,8 @@ public class ClusterService {
      */
     public ClusterHealth checkClusterHealth() {
         try {
-            Response response = client.performRequest(
-                    "GET",
-                    "/_cluster/health"
-            );
+            Response response = client.performRequest(GET, "/_cluster/health");
+
             HttpEntity entity = response.getEntity();
 
             return jacksonObjectMapper.readValue(entity.getContent(), ClusterHealth.class);

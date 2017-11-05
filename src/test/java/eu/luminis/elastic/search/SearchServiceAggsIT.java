@@ -5,14 +5,14 @@ import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexService;
-import eu.luminis.elastic.search.response.Aggregation;
-import eu.luminis.elastic.search.response.CalculatedTermsAggregation;
-import eu.luminis.elastic.search.response.DateHistogramAggregation;
-import eu.luminis.elastic.search.response.DateHistogramBucket;
-import eu.luminis.elastic.search.response.HistogramAggregation;
-import eu.luminis.elastic.search.response.HistogramBucket;
+import eu.luminis.elastic.search.response.aggregations.Aggregation;
+import eu.luminis.elastic.search.response.aggregations.metric.SingleValueMetricsAggregation;
+import eu.luminis.elastic.search.response.aggregations.bucket.DateHistogramAggregation;
+import eu.luminis.elastic.search.response.aggregations.bucket.DateHistogramBucket;
+import eu.luminis.elastic.search.response.aggregations.bucket.HistogramAggregation;
+import eu.luminis.elastic.search.response.aggregations.bucket.HistogramBucket;
 import eu.luminis.elastic.search.response.HitsAggsResponse;
-import eu.luminis.elastic.search.response.TermsAggregation;
+import eu.luminis.elastic.search.response.aggregations.bucket.TermsAggregation;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +40,7 @@ public class SearchServiceAggsIT {
     public static final int NUM_DAYS_TO_SUBTRACT_2 = 2;
     public static final int NUM_DAYS_TO_SUBTRACT_5 = 5;
     public static final ZoneId ZONE_ID = ZoneId.of("Europe/Amsterdam");
+
     @Autowired
     private IndexService indexService;
 
@@ -109,7 +110,7 @@ public class SearchServiceAggsIT {
     }
 
     @Test
-    public void findTermsNoAggs() {
+    public void testFindTermsNoAggs() {
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(TEST_AGGS)
                 .setTemplateName("find_message.twig")
@@ -123,7 +124,7 @@ public class SearchServiceAggsIT {
     }
 
     @Test
-    public void findTerms_noHits() {
+    public void testFindTermsNoHits() {
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(TEST_AGGS)
                 .setTemplateName("find_message_aggs_no_hits.twig")
@@ -141,38 +142,141 @@ public class SearchServiceAggsIT {
     }
 
     @Test
-    public void calculateAvgYearPerTag() {
+    public void testCalculateAvgYearPerTag() {
+
+        doCalculateYearPerTag((key, value) -> {
+            switch (key) {
+                case "news":
+                    assertEquals((1970D + 1985D)/2D, value, 0.01);
+                    break;
+                case "blog":
+                    assertEquals(1980D, value, 0.01);
+                    break;
+                case "twitter":
+                    assertEquals(2000D, value, 0.01);
+                    break;
+            }
+        }, "terms_calculated_avg.twig");
+    }
+
+    @Test
+    public void testCalculateSumPerYearTag() {
+        doCalculateYearPerTag((key, value) -> {
+            switch (key) {
+                case "news":
+                    assertEquals(1970D + 1985D, value, 0.01);
+                    break;
+                case "blog":
+                    assertEquals(1980D, value, 0.01);
+                    break;
+                case "twitter":
+                    assertEquals(2000D, value, 0.01);
+                    break;
+            }
+        }, "terms_calculated_sum.twig");
+    }
+
+    @Test
+    public void testCalculateMinPerYearTag() {
+        doCalculateYearPerTag((key, value) -> {
+            switch (key) {
+                case "news":
+                    assertEquals(1970D, value, 0.01);
+                    break;
+                case "blog":
+                    assertEquals(1980D, value, 0.01);
+                    break;
+                case "twitter":
+                    assertEquals(2000D, value, 0.01);
+                    break;
+            }
+        }, "terms_calculated_min.twig");
+    }
+
+    @Test
+    public void testCalculateMaxPerYearTag() {
+        doCalculateYearPerTag((key, value) -> {
+            switch (key) {
+                case "news":
+                    assertEquals(1985D, value, 0.01);
+                    break;
+                case "blog":
+                    assertEquals(1980D, value, 0.01);
+                    break;
+                case "twitter":
+                    assertEquals(2000D, value, 0.01);
+                    break;
+            }
+        }, "terms_calculated_max.twig");
+    }
+
+    @Test
+    public void testCalculateCardinalityPerYearTag() {
+        doCalculateYearPerTag((key, value) -> {
+            switch (key) {
+                case "news":
+                    assertEquals(2, value, 0.01);
+                    break;
+                case "blog":
+                    assertEquals(1, value, 0.01);
+                    break;
+                case "twitter":
+                    assertEquals(1, value, 0.01);
+                    break;
+            }
+        }, "terms_calculated_cardinality.twig");
+    }
+
+    @Test
+    public void testCalculateValueCountPerYearTag() {
+        doCalculateYearPerTag((key, value) -> {
+            switch (key) {
+                case "news":
+                    assertEquals(2, value, 0.01);
+                    break;
+                case "blog":
+                    assertEquals(1, value, 0.01);
+                    break;
+                case "twitter":
+                    assertEquals(1, value, 0.01);
+                    break;
+            }
+        }, "terms_calculated_value_count.twig");
+    }
+
+    private interface CheckCalculaterAggregation {
+        void check(String key, Double value);
+    }
+
+    public void doCalculateYearPerTag(CheckCalculaterAggregation check, String template) {
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(TEST_AGGS)
-                .setTemplateName("terms_calculated.twig")
+                .setTemplateName(template)
                 .setAddId(true)
                 .setTypeReference(new MessageEntityTypeReference());
 
         HitsAggsResponse<MessageEntity> response = searchService.aggsByTemplate(request);
 
         assertEquals(0, response.getHits().size());
-        Aggregation calcTerms = response.getAggregations().get("calcTerms");
-        assertNotNull(calcTerms);
-        assertTrue(calcTerms instanceof CalculatedTermsAggregation);
-        CalculatedTermsAggregation calculatedTermsAggregation = (CalculatedTermsAggregation) calcTerms;
-        assertEquals(3, calculatedTermsAggregation.getBuckets().size());
-        calculatedTermsAggregation.getBuckets().forEach(bucket -> {
-            switch (bucket.getKey()) {
-                case "news":
-                    assertEquals((1970D + 1985D) / 2D, bucket.getCalculated().getValue(), 0.01);
-                    break;
-                case "blog":
-                    assertEquals(1980D, bucket.getCalculated().getValue(), 0.01);
-                    break;
-                case "twitter":
-                    assertEquals(2000D, bucket.getCalculated().getValue(), 0.01);
-                    break;
-            }
+        Aggregation termsCalcTerms = response.getAggregations().get("calcTerms");
+        assertNotNull(termsCalcTerms);
+        assertTrue(termsCalcTerms instanceof TermsAggregation);
+        TermsAggregation terms = (TermsAggregation) termsCalcTerms;
+
+        terms.getBuckets().forEach(bucket -> {
+            Aggregation aggregation = bucket.getAggregations().get("calculated");
+            assertTrue(aggregation instanceof SingleValueMetricsAggregation);
+            SingleValueMetricsAggregation singleValueMetricsAggregation = (SingleValueMetricsAggregation) aggregation;
+
+            Double value = singleValueMetricsAggregation.getValue();
+
+            String key = bucket.getKey();
+            check.check(key,value);
         });
     }
 
     @Test
-    public void findHistogramByYear() {
+    public void testFindHistogramByYear() {
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(TEST_AGGS)
                 .setTemplateName("find_message_range_aggs_no_hits.twig")
@@ -195,7 +299,7 @@ public class SearchServiceAggsIT {
     }
 
     @Test
-    public void findDateHistogramByDay() {
+    public void testFindDateHistogramByDay() {
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(TEST_AGGS)
                 .setTemplateName("find_message_date_histo_no_hits.twig")

@@ -3,6 +3,9 @@ package eu.luminis.elastic.cluster.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Value bean used as a response object for checking the cluster health.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ClusterHealth {
     @JsonProperty(value = "cluster_name")
@@ -160,7 +163,6 @@ public class ClusterHealth {
         this.taskMaxWaitingInQueueMillis = taskMaxWaitingInQueueMillis;
     }
 
-
     @Override
     public String toString() {
         return "ClusterHealth{" +
@@ -180,4 +182,5 @@ public class ClusterHealth {
                 ", taskMaxWaitingInQueueMillis=" + taskMaxWaitingInQueueMillis +
                 '}';
     }
+
 }

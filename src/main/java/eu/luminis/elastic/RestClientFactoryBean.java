@@ -20,6 +20,8 @@ import java.io.IOException;
 @Component
 public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
     private static final Logger logger = LoggerFactory.getLogger(RestClientFactoryBean.class);
+    public static final String HEADER_CONTENT_TYPE_KEY = "Content-Type";
+    public static final String DEFAULT_HEADER_CONTENT_TYPE = "application/json";
 
     private final LoggingFailureListener loggingFailureListener;
 
@@ -47,7 +49,7 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
             hosts[i] = HttpHost.create(hostnames[i]);
         }
 
-        Header[] defaultHeaders = new Header[]{new BasicHeader("Content-Type", "application/json")};
+        Header[] defaultHeaders = new Header[]{new BasicHeader(HEADER_CONTENT_TYPE_KEY, DEFAULT_HEADER_CONTENT_TYPE)};
 
         RestClient restClient = RestClient
                 .builder(hosts)
