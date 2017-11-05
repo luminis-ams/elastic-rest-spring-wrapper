@@ -27,6 +27,12 @@ public class IndexResponse {
     @JsonProperty(value = "forced_refresh")
     private Boolean forcedRefresh;
 
+    @JsonProperty(value = "_seq_no")
+    private long seqNumber;
+
+    @JsonProperty(value = "_primary_term")
+    private String primaryTerm;
+
     public String getIndex() {
         return index;
     }
@@ -89,5 +95,21 @@ public class IndexResponse {
 
     public void setForcedRefresh(Boolean forcedRefresh) {
         this.forcedRefresh = forcedRefresh;
+    }
+
+    public long getSeqNumber() {
+        return seqNumber;
+    }
+
+    public void setSeqNumber(long seqNumber) {
+        this.seqNumber = seqNumber;
+    }
+
+    public String getPrimaryTerm() {
+        return primaryTerm;
+    }
+
+    public void setPrimaryTerm(String primaryTerm) {
+        this.primaryTerm = primaryTerm;
     }
 }

@@ -1,10 +1,7 @@
 package eu.luminis.elastic.search;
 
-import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.IndexDocumentHelper;
 import eu.luminis.elastic.RestClientConfig;
-import eu.luminis.elastic.document.DocumentService;
-import eu.luminis.elastic.document.IndexRequest;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexService;
@@ -23,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = RestClientConfig.class)
-public class SearchServiceTest extends ElasticTestCase {
+public class SearchServiceIT {
 
     private final static String INDEX = "search_index";
     private final static String TYPE = "search_type";
@@ -39,8 +36,8 @@ public class SearchServiceTest extends ElasticTestCase {
 
     @Before
     public void setUp() throws Exception {
-        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_1", "This is a document about elastic", 2000L);
-        indexDocumentHelper.indexDocument(INDEX,TYPE,"elastic_2", "Another document about elastic", 2000L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_1", "This is a document about elastic", 2000L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_2", "Another document about elastic", 2000L);
         indexService.refreshIndexes(INDEX);
     }
 

@@ -1,6 +1,5 @@
 package eu.luminis.elastic.index;
 
-import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.RestClientConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,7 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = RestClientConfig.class)
-public class IndexServiceTest extends ElasticTestCase {
+public class IndexServiceIT {
 
     @Autowired
     private IndexService indexService;

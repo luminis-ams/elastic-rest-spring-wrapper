@@ -3,7 +3,6 @@ package eu.luminis.elastic.cluster;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.TestConfig;
 import eu.luminis.elastic.cluster.response.ClusterHealth;
-import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.index.IndexService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,7 +14,7 @@ import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {RestClientConfig.class, TestConfig.class})
-public class ClusterServiceTest extends ElasticTestCase {
+public class ClusterServiceTestIT {
 
     @Autowired
     private ClusterService clusterService;
@@ -30,7 +29,7 @@ public class ClusterServiceTest extends ElasticTestCase {
         }
 
         ClusterHealth clusterHealth = clusterService.checkClusterHealth();
-        assertEquals("elasticsearch",clusterHealth.getClusterName());
+        assertEquals("test",clusterHealth.getClusterName());
         assertEquals(1,clusterHealth.getNumberOfNodes());
         assertEquals("yellow", clusterHealth.getStatus());
         assertTrue(clusterHealth.getActivePrimaryShards()>= 5);

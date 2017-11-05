@@ -10,6 +10,8 @@ public class Shards {
 
     private Integer failed;
 
+    private Integer skipped;
+
     public Integer getFailed() {
         return failed;
     }
@@ -32,5 +34,13 @@ public class Shards {
 
     public void setTotal(Integer total) {
         this.total = total;
+    }
+
+    public Integer getSkipped() {
+        return skipped;
+    }
+
+    public void setSkipped(Integer skipped) {
+        this.skipped = skipped;
     }
 }

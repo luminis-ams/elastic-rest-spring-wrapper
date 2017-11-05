@@ -1,6 +1,8 @@
 package eu.luminis.elastic;
 
+import org.apache.http.Header;
 import org.apache.http.HttpHost;
+import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.sniff.Sniffer;
 import org.slf4j.Logger;
@@ -44,8 +46,12 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
         for (int i = 0; i < hosts.length; i++) {
             hosts[i] = HttpHost.create(hostnames[i]);
         }
+
+        Header[] defaultHeaders = new Header[]{new BasicHeader("Content-Type", "application/json")};
+
         RestClient restClient = RestClient
                 .builder(hosts)
+                .setDefaultHeaders(defaultHeaders)
                 .setFailureListener(loggingFailureListener)
                 .build();
 

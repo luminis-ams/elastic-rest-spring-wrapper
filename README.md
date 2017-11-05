@@ -160,3 +160,9 @@ These are some interesting not so obvious blog posts that helped me during the c
 
 Help with using Jackson for object deserialization
 http://www.robinhowlett.com/blog/2015/03/19/custom-jackson-polymorphic-deserialization-without-type-metadata/
+
+# Creating the integration tests
+
+https://github.com/alexcojocaru/elasticsearch-maven-plugin
+
+https://github.com/allegro/embedded-elasticsearch

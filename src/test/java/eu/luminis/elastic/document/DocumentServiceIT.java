@@ -1,6 +1,5 @@
 package eu.luminis.elastic.document;
 
-import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.IndexDocumentHelper;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
@@ -20,7 +19,7 @@ import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = RestClientConfig.class)
-public class DocumentServiceTest extends ElasticTestCase {
+public class DocumentServiceIT {
 
     private static final String INDEX = "inttests";
     private static final String TYPE = "inttest";

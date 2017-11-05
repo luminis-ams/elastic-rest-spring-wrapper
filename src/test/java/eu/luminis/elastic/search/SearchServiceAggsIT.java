@@ -1,6 +1,5 @@
 package eu.luminis.elastic.search;
 
-import eu.luminis.elastic.ElasticTestCase;
 import eu.luminis.elastic.IndexDocumentHelper;
 import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
@@ -36,7 +35,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = RestClientConfig.class)
-public class SearchServiceAggsTest extends ElasticTestCase {
+public class SearchServiceAggsIT {
     public static final String TEST_AGGS = "test_aggs";
     public static final int NUM_DAYS_TO_SUBTRACT_1 = 1;
     public static final int NUM_DAYS_TO_SUBTRACT_2 = 2;
