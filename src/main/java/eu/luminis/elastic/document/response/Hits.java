@@ -5,10 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
- * Created by jettrocoenradie on 08/07/2016.
+ * Following the structure of an elasticsearch response. The hits object contains information about the total set
+ * of hits available and it contains the first hits that are returned.
  */
 public class Hits<T> {
+
     private List<Hit<T>> hits;
+
+    @JsonProperty("total")
     private Long total;
 
     @JsonProperty("max_score")

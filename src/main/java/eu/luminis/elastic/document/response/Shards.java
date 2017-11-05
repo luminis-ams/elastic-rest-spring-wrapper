@@ -1,7 +1,7 @@
 package eu.luminis.elastic.document.response;
 
 /**
- * Created by jettrocoenradie on 08/07/2016.
+ * Object to represent the shards part of the elasticsearch response.
  */
 public class Shards {
     private Integer total;

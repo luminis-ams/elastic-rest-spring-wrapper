@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Specific bucket implementation for Date Histogram Aggregations.
  */
-public class DateHistogramBucket extends Bucket {
+public class DateHistogramBucket implements Bucket {
     @JsonProperty("key_as_string")
     private String keyAsString;
 

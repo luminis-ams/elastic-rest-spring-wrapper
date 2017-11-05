@@ -1,7 +1,5 @@
 package eu.luminis.elastic.helper;
 
-import eu.luminis.elastic.document.DocumentService;
-import eu.luminis.elastic.document.QueryExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,11 +12,16 @@ import java.lang.reflect.Method;
 public class AddIdHelper {
     private static final Logger logger = LoggerFactory.getLogger(AddIdHelper.class);
 
+    private AddIdHelper() {
+        throw new IllegalStateException("Utility class");
+    }
+
     /**
      * Uses the provided id to call the methods <code>setId(String id)</code> of the provided entity instance
-     * @param id String containing the id to set
+     *
+     * @param id     String containing the id to set
      * @param source Entity object that contains the <code>setId</code> method
-     * @param <T> Type of the provided entity object
+     * @param <T>    Type of the provided entity object
      */
     public static <T> void addIdToEntity(String id, T source) {
         addIdToEntity(id, source, "setId");
@@ -26,9 +29,10 @@ public class AddIdHelper {
 
     /**
      * Uses the provided id to call the methods with the provided name of the provided entity instance
-     * @param id String containing the id to set
+     *
+     * @param id     String containing the id to set
      * @param source Entity object that contains the <code>setId</code> method
-     * @param <T> Type of the provided entity object
+     * @param <T>    Type of the provided entity object
      */
     public static <T> void addIdToEntity(String id, T source, String methodName) {
         Method setIdMethod;

@@ -9,9 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created by jettrocoenradie on 15/04/2017.
+ * Default Bucket that can be used by most other buckets besides the ones with a non-string key.
  */
-public class BaseBucket extends Bucket {
+public class BaseBucket implements Bucket {
     @JsonProperty("key")
     private String key;
 

@@ -1,9 +1,9 @@
 package eu.luminis.elastic.document;
 
 public class QueryByIdNotFoundException extends RuntimeException {
-    private String index;
-    private String type;
-    private String id;
+    private final String index;
+    private final String type;
+    private final String id;
 
     public QueryByIdNotFoundException(String index, String type, String id) {
         super("Document with id " + id + ", type " + type + ", index " + index + " could not be found");

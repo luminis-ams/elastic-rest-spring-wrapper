@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.Hashtable;
 
 /**
@@ -104,7 +103,7 @@ public class IndexService {
         try {
             String endpoint = "/_refresh";
             if (names.length > 0) {
-                endpoint = "/" + String.join(",",names) + endpoint;
+                endpoint = "/" + String.join(",", names) + endpoint;
             }
 
             Response response = client.performRequest(
@@ -112,8 +111,8 @@ public class IndexService {
                     endpoint
             );
 
-            if (response.getStatusLine().getStatusCode() > 399) {
-                logger.warn("Problem while refreshing indexes: {}", String.join(",",names));
+            if (response.getStatusLine().getStatusCode() > 399 && logger.isWarnEnabled()) {
+                logger.warn("Problem while refreshing indexes: {}", String.join(",", names));
             }
 
             if (logger.isDebugEnabled()) {

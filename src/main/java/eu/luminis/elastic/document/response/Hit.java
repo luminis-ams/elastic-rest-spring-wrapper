@@ -3,7 +3,7 @@ package eu.luminis.elastic.document.response;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Created by jettrocoenradie on 08/07/2016.
+ * One of the hits that are actually returned.
  */
 public class Hit<T> {
     @JsonProperty(value = "_index")
