@@ -12,10 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -36,13 +38,21 @@ public class SearchServiceIT {
 
     @Before
     public void setUp() throws Exception {
-        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_1", "This is a document about elastic", 2000L);
-        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_2", "Another document about elastic", 2000L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_1", "This is a document about elastic", 2001L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_3", "Second document about elastic", 2003L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_4", "Third document about elastic", 2004L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_9", "Fourth document about elasticsearch", 2009L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_7", "Fifth document about elastic", 2007L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_2", "Sixth document about elastic", 2002L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_6", "Seventh document about elasticsearch", 2006L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_8", "Eighth document about elastic", 2008L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_10", "Ninth document about elasticsearch", 2010L);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_5", "Tenth document about elastic", 2005L);
         indexService.refreshIndexes(INDEX);
     }
 
     @Test
-    public void queryByTemplate() {
+    public void testQueryByTemplate() {
 
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(INDEX)
@@ -53,17 +63,51 @@ public class SearchServiceIT {
 
         List<MessageEntity> entities = searchService.queryByTemplate(request);
 
-        assertEquals(2, entities.size());
-        List<String> ids = Arrays.asList(entities.get(0).getId(), entities.get(1).getId());
+        assertEquals(7, entities.size());
+        List<String> ids = new ArrayList<>();
+        entities.forEach(messageEntity -> ids.add(messageEntity.getId()));
         assertTrue(ids.contains("elastic_1"));
+        assertTrue(ids.contains("elastic_3"));
+        assertTrue(ids.contains("elastic_4"));
+        assertTrue(ids.contains("elastic_7"));
         assertTrue(ids.contains("elastic_2"));
+        assertTrue(ids.contains("elastic_8"));
+        assertTrue(ids.contains("elastic_5"));
+
+        assertFalse(ids.contains("elastic_9"));
+        assertFalse(ids.contains("elastic_6"));
+        assertFalse(ids.contains("elastic_10"));
     }
 
     @Test
-    public void countByIndex() {
+    public void testSortQueryByTemplate() {
+        SearchByTemplateRequest request = SearchByTemplateRequest.create()
+                .setIndexName(INDEX)
+                .setTemplateName("find_message_sort.twig")
+                .setAddId(true)
+                .setTypeReference(new MessageEntityTypeReference())
+                .addModelParam("sort", "asc");
+
+        List<MessageEntity> entities = searchService.queryByTemplate(request);
+
+        assertEquals(10, entities.size());
+        assertEquals("elastic_1", entities.get(0).getId());
+        assertEquals("elastic_2", entities.get(1).getId());
+        assertEquals("elastic_3", entities.get(2).getId());
+        assertEquals("elastic_4", entities.get(3).getId());
+        assertEquals("elastic_5", entities.get(4).getId());
+        assertEquals("elastic_6", entities.get(5).getId());
+        assertEquals("elastic_7", entities.get(6).getId());
+        assertEquals("elastic_8", entities.get(7).getId());
+        assertEquals("elastic_9", entities.get(8).getId());
+        assertEquals("elastic_10", entities.get(9).getId());
+    }
+
+    @Test
+    public void testCountByIndex() {
         long countByIndex = searchService.countByIndex(INDEX);
 
-        assertEquals(2L, countByIndex);
+        assertEquals(10L, countByIndex);
     }
 
 }

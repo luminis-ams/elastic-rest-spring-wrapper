@@ -21,6 +21,9 @@ public class Hit<T> {
     @JsonProperty(value = "_source")
     private T source;
 
+    @JsonProperty(value = "sort")
+    private String[] sort;
+
     public String getId() {
         return id;
     }
@@ -59,5 +62,13 @@ public class Hit<T> {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public String[] getSort() {
+        return sort;
+    }
+
+    public void setSort(String[] sort) {
+        this.sort = sort;
     }
 }
