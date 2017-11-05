@@ -131,18 +131,21 @@ public List<Employee> queryForEmployeesByNameAndEmail(String searchString) {
 This is mainly the same as for searching for documents. We do expect a Jackson ObjectMapper bean to be present. Usually spring takes care of this. If not, you have to provide one by yourself.
 
 The aggregation responses can be divided into two groups. The Bucket aggregations and the Metric Aggregations. Not all aggregations are supported at the moment. Below is a list we do support at the moment:
-## Bucket Aggregations
+*Bucket Aggregations*
 - Terms
 - Histogram
 - Date Histogram
 
-## Metric Aggregations
+*Metric Aggregations*
 - Avg
 - Sum
 - Max
 - Min
 - Cardinality
 - Value Count
+
+Aggregations can now also be nested. You can nest a bucket aggregation with a metric aggregation. You can also nest
+two bucket aggregations.
 
 # deploying an artifacts
 The command to upload an artifact is:
@@ -163,6 +166,10 @@ http://www.robinhowlett.com/blog/2015/03/19/custom-jackson-polymorphic-deseriali
 
 # Creating the integration tests
 
+At the moment the tests need to have a running elasticsearch server on port 19200. You can start one yourself and run
+the tests from within your IDE. It this is to much hassle, you can run the build with Maven. A plugin is used to download and start elasticsearch from maven. Below a link to the used plugin:
+
 https://github.com/alexcojocaru/elasticsearch-maven-plugin
 
+Another approach that is interesting is to start an embedded elasticsearch instance from Java. Need some time to evaluate this option.
 https://github.com/allegro/embedded-elasticsearch
