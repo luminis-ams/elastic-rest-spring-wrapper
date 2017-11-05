@@ -2,6 +2,7 @@ package eu.luminis.elastic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.search.AggregationConfig;
+import eu.luminis.elastic.search.response.CalculatedTermsAggregation;
 import eu.luminis.elastic.search.response.DateHistogramAggregation;
 import eu.luminis.elastic.search.response.HistogramAggregation;
 import eu.luminis.elastic.search.response.TermsAggregation;
@@ -19,6 +20,7 @@ public class TestConfig {
         config.addConfig("byTags", TermsAggregation.class);
         config.addConfig("byHistogram", HistogramAggregation.class);
         config.addConfig("byDateHistogram", DateHistogramAggregation.class);
+        config.addConfig("calcTerms", CalculatedTermsAggregation.class);
 
         return config;
     }
