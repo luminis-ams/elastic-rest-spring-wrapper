@@ -1,0 +1,21 @@
+{
+    "aggs": {
+        "byDateHistogram": {
+            "date_histogram": {
+                "field": "created",
+                "interval": "day",
+                "format": "yyyy-MM-dd",
+                "time_zone": "Europe/Amsterdam"
+            },
+            "aggs": {
+                "byTags": {
+                    "terms": {
+                        "field": "tags",
+                        "size": 25
+                    }
+                }
+            }
+        }
+    },
+    "size": 0
+}

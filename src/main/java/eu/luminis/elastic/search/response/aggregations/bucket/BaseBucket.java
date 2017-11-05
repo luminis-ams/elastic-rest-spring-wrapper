@@ -34,6 +34,8 @@ public class BaseBucket extends Bucket {
         this.docCount = docCount;
     }
 
+    private Map<String, Aggregation> aggregations = new HashMap<>();
+
     @JsonAnySetter
     public void add(String key, Aggregation aggregation) {
         int position = key.indexOf('#');
@@ -45,12 +47,6 @@ public class BaseBucket extends Bucket {
     }
 
     @JsonAnyGetter
-    public Map<String, Aggregation> getProperties() {
-        return aggregations;
-    }
-
-    private Map<String, Aggregation> aggregations = new HashMap<>();
-
     public Map<String, Aggregation> getAggregations() {
         return aggregations;
     }

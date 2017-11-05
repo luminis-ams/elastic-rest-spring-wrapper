@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = RestClientConfig.class)
@@ -248,7 +249,7 @@ public class SearchServiceAggsIT {
         void check(String key, Double value);
     }
 
-    public void doCalculateYearPerTag(CheckCalculaterAggregation check, String template) {
+    private void doCalculateYearPerTag(CheckCalculaterAggregation check, String template) {
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(TEST_AGGS)
                 .setTemplateName(template)
@@ -328,6 +329,45 @@ public class SearchServiceAggsIT {
         checkDateHistoBucket(histoAggs.getBuckets().get(4),
                 2, expectedMilis(NUM_DAYS_TO_SUBTRACT_1), expectKeyAsString(NUM_DAYS_TO_SUBTRACT_1));
     }
+
+    @Test
+    public void testFindDateHistogramByDayNestedTerms() {
+        SearchByTemplateRequest request = SearchByTemplateRequest.create()
+                .setIndexName(TEST_AGGS)
+                .setTemplateName("date_histo_nested_terms.twig")
+                .setAddId(true)
+                .setTypeReference(new MessageEntityTypeReference());
+
+        HitsAggsResponse<MessageEntity> response = searchService.aggsByTemplate(request);
+
+        assertEquals(0, response.getHits().size());
+        assertEquals(4, response.getTotalHits());
+
+        Aggregation byDateHistogram = response.getAggregations().get("byDateHistogram");
+        assertNotNull(byDateHistogram);
+        assertTrue(byDateHistogram instanceof DateHistogramAggregation);
+        DateHistogramAggregation histoAggs = (DateHistogramAggregation) byDateHistogram;
+        assertEquals(5, histoAggs.getBuckets().size());
+
+        DateHistogramBucket bucket = histoAggs.getBuckets().get(4);
+        checkDateHistoBucket(bucket,
+                2, expectedMilis(NUM_DAYS_TO_SUBTRACT_1), expectKeyAsString(NUM_DAYS_TO_SUBTRACT_1));
+
+        Aggregation byTags = bucket.getAggregations().get("byTags");
+        assertTrue(byTags instanceof TermsAggregation);
+        TermsAggregation byTagsTerms = (TermsAggregation) byTags;
+        assertEquals(2, byTagsTerms.getBuckets().size());
+        byTagsTerms.getBuckets().forEach(termsBucket -> {
+            switch (termsBucket.getKey()) {
+                case "news":
+                case "blog":
+                    break;
+                default:
+                    fail("tag should have been news or blog");
+            }
+        });
+    }
+
 
     private void checkHistoBucket(HistogramBucket bucket, long expectedCount, String expectedKey) {
         assertEquals(expectedCount, bucket.getDocCount().longValue());

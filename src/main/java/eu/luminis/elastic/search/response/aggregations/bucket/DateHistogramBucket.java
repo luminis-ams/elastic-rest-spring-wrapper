@@ -1,7 +1,13 @@
 package eu.luminis.elastic.search.response.aggregations.bucket;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import eu.luminis.elastic.search.response.aggregations.Aggregation;
 import eu.luminis.elastic.search.response.aggregations.bucket.Bucket;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Specific bucket implementation for Date Histogram Aggregations.
@@ -38,4 +44,26 @@ public class DateHistogramBucket extends Bucket {
     public void setDocCount(Long docCount) {
         this.docCount = docCount;
     }
+
+    private Map<String, Aggregation> aggregations = new HashMap<>();
+
+    @JsonAnySetter
+    public void add(String key, Aggregation aggregation) {
+        int position = key.indexOf('#');
+        if (position != -1) {
+            aggregations.put(key.substring(position + 1), aggregation);
+        } else {
+            aggregations.put(key, aggregation);
+        }
+    }
+
+    @JsonAnyGetter
+    public Map<String, Aggregation> getAggregations() {
+        return aggregations;
+    }
+
+    public void setAggregations(Map<String, Aggregation> aggregations) {
+        this.aggregations = aggregations;
+    }
+
 }
