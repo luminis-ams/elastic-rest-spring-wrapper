@@ -117,7 +117,7 @@
                 </executions>
                 <configuration>
                     <serverId>nexus</serverId>
-                    <nexusUrl>https://npm.luminis-ams.nl</nexusUrl>
+                    <nexusUrl>https://repository.luminis.amsterdam</nexusUrl>
                     <skipStaging>true</skipStaging>
                 </configuration>
             </plugin>
