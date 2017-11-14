@@ -1,4 +1,4 @@
-package eu.luminis.elastic.search.response;
+package eu.luminis.elastic.search.response.query;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import eu.luminis.elastic.document.response.Hits;
@@ -8,7 +8,7 @@ import eu.luminis.elastic.search.response.aggregations.Aggregation;
 import java.util.Map;
 
 
-public class QueryResponse<T> {
+public class ElasticQueryResponse<T> {
     private Long took;
 
     @JsonProperty(value = "timed_out")

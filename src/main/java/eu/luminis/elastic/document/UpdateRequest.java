@@ -6,9 +6,6 @@ package eu.luminis.elastic.document;
 public class UpdateRequest extends DocumentRequest {
     private Object entity;
 
-    public UpdateRequest() {
-    }
-
     public UpdateRequest(String index, String type, String id) {
         super(index, type, id);
     }

@@ -37,9 +37,9 @@ public class DocumentServiceIT {
 
     @Before
     public void setUp() throws Exception {
-        indexDocumentHelper.indexDocument(INDEX,TYPE, EXISTING_ID_1, EXISTING_ID_1_MESSAGE);
-        indexDocumentHelper.indexDocument(INDEX,TYPE, "elastic_1", "This is a document about elastic");
-        indexDocumentHelper.indexDocument(INDEX,TYPE, "elastic_2", "Another document about elastic");
+        indexDocumentHelper.indexDocument(INDEX, TYPE, EXISTING_ID_1, EXISTING_ID_1_MESSAGE);
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_1", "This is a document about elastic");
+        indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_2", "Another document about elastic");
 
         indexService.refreshIndexes(INDEX);
     }
@@ -79,6 +79,17 @@ public class DocumentServiceIT {
             assertEquals(INDEX, e.getIndex());
             assertEquals(TYPE, e.getType());
             assertEquals("non_existing", e.getId());
+        }
+    }
+
+    @Test
+    public void querybyId_NoTypeReference() throws Exception {
+        QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, "non_existing");
+        try {
+            documentService.queryById(request);
+            fail("A QueryExecutionException should have been thrown");
+        } catch (QueryExecutionException e) {
+            assertEquals("The TypeReference in the request cannot be null", e.getMessage());
         }
     }
 
@@ -139,29 +150,11 @@ public class DocumentServiceIT {
     }
 
     @Test
-    public void createDocument() {
-        MessageEntity entity = new MessageEntity();
-        entity.setMessage("An create index with an id");
-
-        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, "create_1");
-        indexRequest.setEntity(entity);
-
-        documentService.index(indexRequest);
-
-        try {
-            documentService.create(indexRequest);
-            fail("An IndexDocumentException should have been thrown");
-        } catch (IndexDocumentException e) {
-            assertTrue(true);
-        }
-    }
-
-    @Test
     public void updateDocument() {
         MessageEntity entity = new MessageEntity();
         entity.setId("test_update");
 
-        IndexRequest indexRequest = new IndexRequest(INDEX,TYPE, "test_update");
+        IndexRequest indexRequest = new IndexRequest(INDEX, TYPE, "test_update");
         indexRequest.setEntity(entity);
         indexRequest.setRefresh(Refresh.NOW);
         documentService.index(indexRequest);
@@ -177,6 +170,62 @@ public class DocumentServiceIT {
         MessageEntity updatedMessage = documentService.queryById(test_update);
 
         assertEquals("Updated message", updatedMessage.getMessage());
+    }
+
+    @Test
+    public void create_existing_id() {
+        MessageEntity entity = new MessageEntity();
+        entity.setMessage("An create index with an existing id");
+
+        IndexRequest indexRequest = new IndexRequest();
+        indexRequest.setIndex(INDEX).setType(TYPE).setId("create_1");
+        indexRequest.setEntity(entity);
+
+        documentService.index(indexRequest);
+
+        try {
+            documentService.create(indexRequest);
+            fail("An IndexDocumentException should have been thrown");
+        } catch (IndexDocumentException e) {
+            assertTrue(true);
+        }
+    }
+
+    @Test
+    public void create_new_id() {
+        try {
+            DeleteRequest deleteRequest = new DeleteRequest(INDEX, TYPE, "create_2");
+            documentService.remove(deleteRequest);
+        } catch (IndexDocumentException e) {
+            // don't care, if not running with clean install or clean index need to delete, in the other cases not.
+        }
+
+        MessageEntity entity = new MessageEntity();
+        entity.setMessage("An create index with an new id");
+
+        IndexRequest indexRequest = new IndexRequest();
+        indexRequest.setIndex(INDEX).setType(TYPE).setId("create_2");
+        indexRequest.setEntity(entity);
+
+        String result = documentService.create(indexRequest);
+        assertNotNull(result);
+    }
+
+    @Test
+    public void create_no_id() {
+        MessageEntity entity = new MessageEntity();
+        entity.setMessage("An create index without an id");
+
+        IndexRequest indexRequest = new IndexRequest();
+        indexRequest.setIndex(INDEX).setType(TYPE);
+        indexRequest.setEntity(entity);
+
+        try {
+            documentService.create(indexRequest);
+            fail("A QueryExecutionException should have been thrown as there is no id");
+        } catch (QueryExecutionException e) {
+            assertEquals("Executing create request without an id", e.getMessage());
+        }
     }
 
 }

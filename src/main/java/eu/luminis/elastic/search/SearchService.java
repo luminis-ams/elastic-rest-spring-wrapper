@@ -2,9 +2,10 @@ package eu.luminis.elastic.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.document.QueryExecutionException;
+import eu.luminis.elastic.search.response.HitsResponse;
 import eu.luminis.elastic.search.response.aggregations.metric.MetricResponse;
 import eu.luminis.elastic.search.response.HitsAggsResponse;
-import eu.luminis.elastic.search.response.QueryResponse;
+import eu.luminis.elastic.search.response.query.ElasticQueryResponse;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.RestClient;
@@ -47,13 +48,16 @@ public class SearchService {
      * @param <T>     Type of resulting objects, must be mapped from json result into java entity
      * @return List of mapped objects
      */
-    public <T> List<T> queryByTemplate(SearchByTemplateRequest request) {
+    public <T> HitsResponse<T> queryByTemplate(SearchByTemplateRequest request) {
         Assert.notNull(request, "Need to provide a SearchByTemplateRequest object");
 
         try {
-            QueryResponse<T> queryResponse = doExecuteQuery(request);
+            ElasticQueryResponse<T> elasticQueryResponse = doExecuteQuery(request);
+            HitsResponse<T> hitsResponse = new HitsResponse<>();
 
-            return extractHitsByType(request, queryResponse);
+            putInfoFromQueryIntoHitsResponse(request, elasticQueryResponse, hitsResponse);
+
+            return hitsResponse;
         } catch (IOException e) {
             logger.warn("Problem while executing request.", e);
             throw new QueryExecutionException("Error when executing a document");
@@ -72,16 +76,11 @@ public class SearchService {
         Assert.notNull(request, "Need to provide a SearchByTemplateRequest object");
 
         try {
-            QueryResponse<T> queryResponse = doExecuteQuery(request);
-            long totalHits = queryResponse.getHits().getTotal();
-
-            List<T> hits = extractHitsByType(request, queryResponse);
-
-            // Now Add the aggregations
+            ElasticQueryResponse<T> elasticQueryResponse = doExecuteQuery(request);
             HitsAggsResponse<T> hitsAggsResponse = new HitsAggsResponse<>();
-            hitsAggsResponse.setHits(hits);
-            hitsAggsResponse.setAggregations(queryResponse.getAggregations());
-            hitsAggsResponse.setTotalHits(totalHits);
+            putInfoFromQueryIntoHitsResponse(request,elasticQueryResponse,hitsAggsResponse);
+
+            hitsAggsResponse.setAggregations(elasticQueryResponse.getAggregations());
             return hitsAggsResponse;
         } catch (IOException e) {
             logger.warn("Problem while executing request.", e);
@@ -110,7 +109,7 @@ public class SearchService {
 
     }
 
-    private <T> QueryResponse<T> doExecuteQuery(SearchByTemplateRequest request) throws IOException {
+    private <T> ElasticQueryResponse<T> doExecuteQuery(SearchByTemplateRequest request) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("typed_keys", null);
         Response response = client.performRequest(
@@ -122,9 +121,17 @@ public class SearchService {
         return jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
     }
 
-    private <T> List<T> extractHitsByType(SearchByTemplateRequest request, QueryResponse<T> queryResponse) {
+    private <T> void putInfoFromQueryIntoHitsResponse(SearchByTemplateRequest request, ElasticQueryResponse<T> elasticQueryResponse, HitsResponse<T> hitsResponse) {
+        List<T> hits = extractHitsByType(request, elasticQueryResponse);
+        hitsResponse.setHits(hits);
+        hitsResponse.setTotalHits(elasticQueryResponse.getHits().getTotal());
+        hitsResponse.setTimedOut(elasticQueryResponse.getTimedOut());
+        hitsResponse.setResponseTime(elasticQueryResponse.getTook());
+    }
+
+    private <T> List<T> extractHitsByType(SearchByTemplateRequest request, ElasticQueryResponse<T> elasticQueryResponse) {
         List<T> hits = new ArrayList<>();
-        queryResponse.getHits().getHits().forEach(tHit -> {
+        elasticQueryResponse.getHits().getHits().forEach(tHit -> {
             T source = tHit.getSource();
             if (request.getAddId()) {
                 addIdToEntity(tHit.getId(), source);

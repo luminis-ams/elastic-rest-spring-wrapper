@@ -114,36 +114,8 @@ public class DocumentService {
         if (request.getId() == null) {
             throw new QueryExecutionException("Executing create request without an id");
         }
-        String method = PUT;
         String endpoint = createEndpointCreateString(request.getIndex(), request.getType(), request.getId());
-        return doIndex(request, method, endpoint);
-    }
-
-    private String doIndex(IndexRequest request, String method, String endpoint) {
-        try {
-            HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(request.getEntity()), Charset.defaultCharset());
-            Response response = client.performRequest(
-                    method,
-                    endpoint,
-                    getRequestParams(request),
-                    requestBody);
-
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode == 409) {
-                logger.warn("version conflict, trying to create an existing document?");
-                throw new IndexDocumentException("Document already exists");
-            } else if (statusCode > 299) {
-                logger.warn("Problem while indexing a document: {}", response.getStatusLine().getReasonPhrase());
-                throw new IndexDocumentException("Could not index a document, status code is " + statusCode);
-            }
-
-            IndexResponse queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), IndexResponse.class);
-
-            return queryResponse.getId();
-        } catch (IOException e) {
-            logger.warn("Problem while executing request to index a document.", e);
-            throw new IndexDocumentException("Error when indexing a document");
-        }
+        return doIndex(request, PUT, endpoint);
     }
 
     /**
@@ -164,14 +136,19 @@ public class DocumentService {
         }
     }
 
+    /**
+     * Updates the document as specified in the provided UpdateRequest.
+     *
+     * @param request UpdateRequest containing the required information to execute an update
+     * @return
+     */
     public String update(UpdateRequest request) {
-        String method = POST;
         String endpoint = createEndpointUpdateString(request.getIndex(), request.getType(), request.getId());
         WrappedEntity entity = new WrappedEntity(request.getEntity());
         try {
             HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(entity), Charset.defaultCharset());
             Response response = client.performRequest(
-                    method,
+                    POST,
                     endpoint,
                     getRequestParams(request),
                     requestBody);
@@ -190,6 +167,34 @@ public class DocumentService {
             throw new IndexDocumentException("Error when updating a document");
         }
 
+    }
+
+    private String doIndex(IndexRequest request, String method, String endpoint) {
+        try {
+            HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(request.getEntity()), Charset.defaultCharset());
+            Response response = client.performRequest(
+                    method,
+                    endpoint,
+                    getRequestParams(request),
+                    requestBody);
+
+            IndexResponse queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), IndexResponse.class);
+
+            return queryResponse.getId();
+        } catch (ResponseException e) {
+            Response response = e.getResponse();
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == 409) {
+                logger.warn("version conflict, trying to create an existing document?");
+                throw new IndexDocumentException("Document already exists");
+            } else {
+                logger.warn("Problem while indexing a document: {}", response.getStatusLine().getReasonPhrase());
+                throw new IndexDocumentException("Could not index a document, status code is " + statusCode);
+            }
+        } catch (IOException e) {
+            logger.warn("Problem while executing request to index a document.", e);
+            throw new IndexDocumentException("Error when indexing a document");
+        }
     }
 
     private Map<String, String> getRequestParams(DocumentRequest request) {

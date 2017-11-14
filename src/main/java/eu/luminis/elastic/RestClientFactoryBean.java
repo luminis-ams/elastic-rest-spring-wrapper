@@ -5,8 +5,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.sniff.Sniffer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
@@ -19,7 +17,6 @@ import java.io.IOException;
  */
 @Component
 public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
-    private static final Logger logger = LoggerFactory.getLogger(RestClientFactoryBean.class);
     public static final String HEADER_CONTENT_TYPE_KEY = "Content-Type";
     public static final String DEFAULT_HEADER_CONTENT_TYPE = "application/json";
 

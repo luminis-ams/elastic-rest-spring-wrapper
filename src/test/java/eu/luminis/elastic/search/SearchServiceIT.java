@@ -5,6 +5,7 @@ import eu.luminis.elastic.RestClientConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexService;
+import eu.luminis.elastic.search.response.HitsResponse;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,7 +14,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -61,8 +61,10 @@ public class SearchServiceIT {
                 .setTypeReference(new MessageEntityTypeReference())
                 .addModelParam("message", "elastic");
 
-        List<MessageEntity> entities = searchService.queryByTemplate(request);
+        HitsResponse<MessageEntity> hitsResponse = searchService.queryByTemplate(request);
+        List<MessageEntity> entities = hitsResponse.getHits();
 
+        assertEquals(7, hitsResponse.getTotalHits());
         assertEquals(7, entities.size());
         List<String> ids = new ArrayList<>();
         entities.forEach(messageEntity -> ids.add(messageEntity.getId()));
@@ -88,8 +90,10 @@ public class SearchServiceIT {
                 .setTypeReference(new MessageEntityTypeReference())
                 .addModelParam("sort", "asc");
 
-        List<MessageEntity> entities = searchService.queryByTemplate(request);
+        HitsResponse<MessageEntity> hitsResponse = searchService.queryByTemplate(request);
+        List<MessageEntity> entities = hitsResponse.getHits();
 
+        assertEquals(10, hitsResponse.getTotalHits());
         assertEquals(10, entities.size());
         assertEquals("elastic_1", entities.get(0).getId());
         assertEquals("elastic_2", entities.get(1).getId());

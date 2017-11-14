@@ -34,7 +34,17 @@ public class ClusterServiceTestIT {
         assertEquals("yellow", clusterHealth.getStatus());
         assertTrue(clusterHealth.getActivePrimaryShards()>= 5);
         assertTrue(clusterHealth.getUnassignedShards() >= 5);
+        assertTrue(clusterHealth.getActiveShards() >= 5);
+        assertEquals(0,clusterHealth.getRelocatingShards());
+        assertEquals(0,clusterHealth.getInitializingShards());
+        assertEquals(0,clusterHealth.getDelayedUnassignedShards());
         assertFalse(clusterHealth.getTimedOut());
+        assertEquals(1, clusterHealth.getNumberOfDataNodes());
+        assertEquals(1, clusterHealth.getNumberOfDataNodes());
+        assertEquals(0,clusterHealth.getNumberOfPendingTasks());
+        assertEquals(0,clusterHealth.getNumberOfInFlightFetch());
+        assertEquals(0,clusterHealth.getTaskMaxWaitingInQueueMillis());
+        assertNotNull(clusterHealth.toString());
     }
 
 }

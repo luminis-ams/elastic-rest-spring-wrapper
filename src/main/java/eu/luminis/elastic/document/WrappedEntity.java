@@ -11,8 +11,4 @@ public class WrappedEntity {
     public Object getDoc() {
         return doc;
     }
-
-    public void setDoc(Object doc) {
-        this.doc = doc;
-    }
 }
