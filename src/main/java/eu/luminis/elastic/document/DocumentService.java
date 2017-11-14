@@ -143,12 +143,16 @@ public class DocumentService {
     /**
      * Removes the document with the provided unique identification.
      *
-     * @param request Request object contaning the required parameters
+     * @param request Request object containing the required parameters
      * @return Message line that can be used to see if we succeeded.
      */
     public String remove(DeleteRequest request) {
         try {
             String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
+            if (!request.isMustExist() &&
+                    !exists(new ExistsRequest(request.getIndex(), request.getType(), request.getId()))) {
+                return "not_exists";
+            }
             Response response = client.performRequest(DELETE, endpoint);
 
             return response.getStatusLine().getReasonPhrase();

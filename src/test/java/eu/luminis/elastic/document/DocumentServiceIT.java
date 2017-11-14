@@ -147,6 +147,13 @@ public class DocumentServiceIT {
 
     @Test(expected = IndexDocumentException.class)
     public void remove_nonExisting() {
+        DeleteRequest deleteRequest = new DeleteRequest(INDEX, TYPE, "non_existing_delete");
+        deleteRequest.setMustExist(true);
+        documentService.remove(deleteRequest);
+    }
+
+    @Test
+    public void remove_nonExisting_mustExistFalse() {
         documentService.remove(new DeleteRequest(INDEX, TYPE, "non_existing_delete"));
     }
 
