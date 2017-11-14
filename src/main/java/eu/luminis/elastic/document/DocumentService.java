@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static eu.luminis.elastic.RequestMethod.DELETE;
 import static eu.luminis.elastic.RequestMethod.GET;
+import static eu.luminis.elastic.RequestMethod.HEAD;
 import static eu.luminis.elastic.RequestMethod.POST;
 import static eu.luminis.elastic.RequestMethod.PUT;
 import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
@@ -81,6 +82,27 @@ public class DocumentService {
             logger.warn("Problem while executing request.", e);
             throw new QueryExecutionException("Error when executing a document");
         }
+    }
+
+    /**
+     * Checks if the provided document exists or not. If we can find the document true is returned, else false
+     *
+     * @param request ExistsRequest that must contain an index, type and id to check if the document exists
+     * @return Boolean true if the document exists, false otherwise
+     */
+    public Boolean exists(ExistsRequest request) {
+        try {
+            String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
+            Response response = client.performRequest(HEAD, endpoint);
+
+            int statusCode = response.getStatusLine().getStatusCode();
+
+            return statusCode == 200;
+        } catch (IOException e) {
+            logger.warn("Problem while removing a document.", e);
+            throw new IndexDocumentException("Error when removing a document");
+        }
+
     }
 
     /**

@@ -13,6 +13,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -228,4 +229,27 @@ public class DocumentServiceIT {
         }
     }
 
+    @Test
+    public void exists() {
+        ExistsRequest existsRequest = new ExistsRequest(INDEX, TYPE, "elastic_1");
+        Boolean exists = documentService.exists(existsRequest);
+
+        assertTrue(exists);
+    }
+
+    @Test
+    public void existsNotExist() {
+        ExistsRequest existsRequest = new ExistsRequest(INDEX, TYPE, "elastic_not_exist");
+        Boolean exists = documentService.exists(existsRequest);
+
+        assertFalse(exists);
+    }
+
+    @Test
+    public void existsNoId() {
+        ExistsRequest existsRequest = new ExistsRequest(INDEX, TYPE, null);
+        Boolean exists = documentService.exists(existsRequest);
+
+        assertFalse(exists);
+    }
 }
