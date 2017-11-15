@@ -20,7 +20,7 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.8.0</version>
+    <version>0.9.0</version>
 </dependency>
 ```
 
@@ -29,7 +29,7 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.10.0-SNAPSHOT</version>
 </dependency>
 ```
 
