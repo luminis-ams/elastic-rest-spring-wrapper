@@ -64,10 +64,10 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
     protected void destroyInstance(RestClient instance) throws Exception {
         try {
             logger.info("Closing the elasticsearch sniffer");
-            instance.close();
             if (enableSniffer) {
                 this.sniffer.close();
             }
+            instance.close();
         } catch (IOException e) {
             logger.warn("Failed to close the elasticsearch sniffer");
         }
