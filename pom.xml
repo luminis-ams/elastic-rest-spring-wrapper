@@ -22,8 +22,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <elastic.version>6.0.0</elastic.version>
-        <lucene.version>7.0.1</lucene.version>
+        <elastic.version>6.1.1</elastic.version>
+        <lucene.version>7.1.0</lucene.version>
         <jtwig.version>5.86.1.RELEASE</jtwig.version>
         <log4j.version>2.9.1</log4j.version>
     </properties>
@@ -61,14 +61,14 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
-            <version>2.7</version>
+            <version>${log4j.version}</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.7</version>
+            <version>${log4j.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -145,10 +145,10 @@
                 <groupId>com.github.alexcojocaru</groupId>
                 <artifactId>elasticsearch-maven-plugin</artifactId>
                 <!-- REPLACE THE FOLLOWING WITH THE PLUGIN VERSION YOU NEED -->
-                <version>6.0</version>
+                <version>6.1</version>
                 <configuration>
                     <!-- REPLACE THE FOLLOWING WITH THE ELASTICSEARCH VERSION YOU NEED -->
-                    <version>6.0.0</version>
+                    <version>6.1.1</version>
                     <clusterName>test</clusterName>
                     <transportPort>19300</transportPort>
                     <httpPort>19200</httpPort>
