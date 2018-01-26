@@ -23,7 +23,7 @@ public class ClusterServiceTestIT {
     private IndexService indexService;
 
     @Test
-    public void checkClusterHealth() throws Exception {
+    public void checkClusterHealth() {
         if (!indexService.indexExist("cluster_test")) {
             indexService.createIndex("cluster_test", "{}");
         }

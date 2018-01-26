@@ -1,37 +1,29 @@
 package eu.luminis.elastic;
 
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.message.BasicHeader;
+import java.util.Arrays;
+
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.sniff.Sniffer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.AbstractFactoryBean;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
+import eu.luminis.elastic.cluster.ClusterManagementService;
 
 /**
  * Factory bean for creating the RestClient instance(s)
  */
 @Component
 public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
-    public static final String HEADER_CONTENT_TYPE_KEY = "Content-Type";
-    public static final String DEFAULT_HEADER_CONTENT_TYPE = "application/json";
 
-    private final LoggingFailureListener loggingFailureListener;
+    private static final String DEFAULT_CLUSTER_NAME = "default-cluster";
+    private ClusterManagementService factory;
 
     private String[] hostnames;
 
-    private Sniffer sniffer;
-
-    @Value("${enableSniffer:true}")
-    private boolean enableSniffer = true;
-
     @Autowired
-    public RestClientFactoryBean(LoggingFailureListener loggingFailureListener) {
-        this.loggingFailureListener = loggingFailureListener;
+    public RestClientFactoryBean(ClusterManagementService factory) {
+        this.factory = factory;
     }
 
     @Override
@@ -40,37 +32,13 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
     }
 
     @Override
-    protected RestClient createInstance() throws Exception {
-        HttpHost[] hosts = new HttpHost[hostnames.length];
-        for (int i = 0; i < hosts.length; i++) {
-            hosts[i] = HttpHost.create(hostnames[i]);
-        }
-
-        Header[] defaultHeaders = new Header[]{new BasicHeader(HEADER_CONTENT_TYPE_KEY, DEFAULT_HEADER_CONTENT_TYPE)};
-
-        RestClient restClient = RestClient
-                .builder(hosts)
-                .setDefaultHeaders(defaultHeaders)
-                .setFailureListener(loggingFailureListener)
-                .build();
-
-        if (enableSniffer) {
-            this.sniffer = Sniffer.builder(restClient).build();
-        }
-        return restClient;
+    protected RestClient createInstance() {
+        return factory.addCluster(DEFAULT_CLUSTER_NAME, Arrays.asList(hostnames)).getClient();
     }
 
     @Override
-    protected void destroyInstance(RestClient instance) throws Exception {
-        try {
-            logger.info("Closing the elasticsearch sniffer");
-            if (enableSniffer) {
-                this.sniffer.close();
-            }
-            instance.close();
-        } catch (IOException e) {
-            logger.warn("Failed to close the elasticsearch sniffer");
-        }
+    protected void destroyInstance(RestClient instance) {
+        factory.deleteCluster(DEFAULT_CLUSTER_NAME);
     }
 
     @Value("${eu.luminis.elastic.hostnames:#{\"localhost:9200\"}}")
