@@ -17,13 +17,13 @@ import eu.luminis.elastic.cluster.ClusterManagementService;
 public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
 
     private static final String DEFAULT_CLUSTER_NAME = "default-cluster";
-    private ClusterManagementService factory;
+    private final ClusterManagementService clusterManagementService;
 
     private String[] hostnames;
 
     @Autowired
-    public RestClientFactoryBean(ClusterManagementService factory) {
-        this.factory = factory;
+    public RestClientFactoryBean(ClusterManagementService clusterManagementService) {
+        this.clusterManagementService = clusterManagementService;
     }
 
     @Override
@@ -33,12 +33,12 @@ public class RestClientFactoryBean extends AbstractFactoryBean<RestClient> {
 
     @Override
     protected RestClient createInstance() {
-        return factory.addCluster(DEFAULT_CLUSTER_NAME, Arrays.asList(hostnames)).getClient();
+        return clusterManagementService.addCluster(DEFAULT_CLUSTER_NAME, Arrays.asList(hostnames)).getClient();
     }
 
     @Override
     protected void destroyInstance(RestClient instance) {
-        factory.deleteCluster(DEFAULT_CLUSTER_NAME);
+        clusterManagementService.deleteCluster(DEFAULT_CLUSTER_NAME);
     }
 
     @Value("${eu.luminis.elastic.hostnames:#{\"localhost:9200\"}}")

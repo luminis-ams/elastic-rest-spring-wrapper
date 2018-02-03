@@ -12,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import eu.luminis.elastic.LoggingFailureListener;
-import eu.luminis.elastic.cluster.ClusterManagementService;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ClusterManagementServiceTest {
@@ -24,35 +23,35 @@ public class ClusterManagementServiceTest {
     @Mock
     private LoggingFailureListener loggingFailureListener;
     @InjectMocks
-    private ClusterManagementService factory = new ClusterManagementService(loggingFailureListener);
+    private ClusterManagementService clusterManagementService = new ClusterManagementService(loggingFailureListener);
 
     @Test
     public void testAddCluster() {
-        assertThat(factory.addCluster(CLUSTER_NAME, HOSTS)).isNotNull();
-        assertThat(factory.addCluster(CLUSTER_NAME, HOSTS)).isNull();
+        assertThat(clusterManagementService.addCluster(CLUSTER_NAME, HOSTS)).isNotNull();
+        assertThat(clusterManagementService.addCluster(CLUSTER_NAME, HOSTS)).isNull();
     }
 
     @Test
     public void testDeleteCluster() {
-        factory.addCluster(CLUSTER_NAME, HOSTS);
+        clusterManagementService.addCluster(CLUSTER_NAME, HOSTS);
 
-        assertThat(factory.deleteCluster(NON_EXISTENT_CLUSTER_NAME)).isNull();
-        assertThat(factory.deleteCluster(CLUSTER_NAME)).isNotNull();
+        assertThat(clusterManagementService.deleteCluster(NON_EXISTENT_CLUSTER_NAME)).isNull();
+        assertThat(clusterManagementService.deleteCluster(CLUSTER_NAME)).isNotNull();
     }
 
     @Test
     public void testGetCurrentCluster() {
-        factory.addCluster(CLUSTER_NAME, HOSTS);
+        clusterManagementService.addCluster(CLUSTER_NAME, HOSTS);
 
-        assertThat(factory.getCurrentCluster().isPresent()).isFalse();
-        factory.setCurrentCluster(CLUSTER_NAME);
-        assertThat(factory.getCurrentCluster().isPresent()).isTrue();
+        assertThat(clusterManagementService.getCurrentCluster().isPresent()).isFalse();
+        clusterManagementService.setCurrentCluster(CLUSTER_NAME);
+        assertThat(clusterManagementService.getCurrentCluster().isPresent()).isTrue();
     }
 
     @Test
     public void testSetCurrentCluster() {
-        assertThat(factory.setCurrentCluster(CLUSTER_NAME)).isNull();
-        factory.addCluster(CLUSTER_NAME, HOSTS);
-        assertThat(factory.setCurrentCluster(CLUSTER_NAME)).isNotNull();
+        assertThat(clusterManagementService.setCurrentCluster(CLUSTER_NAME)).isNull();
+        clusterManagementService.addCluster(CLUSTER_NAME, HOSTS);
+        assertThat(clusterManagementService.setCurrentCluster(CLUSTER_NAME)).isNotNull();
     }
 }

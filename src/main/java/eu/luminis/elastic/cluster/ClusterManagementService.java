@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.annotation.PreDestroy;
+
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.message.BasicHeader;
@@ -19,6 +21,9 @@ import org.springframework.stereotype.Component;
 
 import eu.luminis.elastic.LoggingFailureListener;
 
+/**
+ * This service facilitates setting up connections to different ES clusters.
+ */
 @Component
 public class ClusterManagementService {
 
@@ -38,10 +43,19 @@ public class ClusterManagementService {
         this.loggingFailureListener = loggingFailureListener;
     }
 
+    /**
+     * Gets the current cluster - there can only be one current cluster at a time.
+     * @return the current cluster that the service is working with, or an empty Optional if no cluster has been set.
+     */
     public Optional<Cluster> getCurrentCluster() {
         return (currentCluster == null) ? Optional.empty() : Optional.of(currentCluster);
     }
 
+    /**
+     * Set the current cluster.
+     * @param clusterName the name of the cluster. Make sure that the given clusterName has been added before using {@link #addCluster(String, List)}}.
+     * @return the corresponding {@link Cluster} object if a cluster exists by that name, else return the current cluster that was already set.
+     */
     public Cluster setCurrentCluster(String clusterName) {
         Cluster cluster = clusters.get(clusterName);
         if(cluster != null) {
@@ -50,6 +64,12 @@ public class ClusterManagementService {
         return currentCluster;
     }
 
+    /**
+     * Add a new cluster to be managed.
+     * @param clusterName the name of the cluster.
+     * @param hosts the hosts within that cluster.
+     * @return the cluster that has just been added, or null if the clusterName was already present.
+     */
     public Cluster addCluster(String clusterName, List<String> hosts) {
         if(!exists(clusterName)) {
             Cluster cluster = createCluster(hosts);
@@ -60,12 +80,17 @@ public class ClusterManagementService {
         }
     }
 
+    /**
+     * Delete a cluster. Also closes any active connections that may exist with this cluster.
+     * @param clusterName the name of the cluster.
+     * @return the closed cluster.
+     */
     public Cluster deleteCluster(String clusterName) {
         return closeCluster(clusterName);
     }
 
-    @Override
-    protected void finalize() {
+    @PreDestroy
+    protected void tearDown() {
         clusters.keySet().forEach(this::closeCluster);
     }
 
