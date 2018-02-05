@@ -34,7 +34,6 @@ public class RestClientConfig {
         deserializer.register("cardinality", SingleValueMetricsAggregation.class);
         deserializer.register("value_count", SingleValueMetricsAggregation.class);
 
-
         SimpleModule module = new SimpleModule("AggregationDeserializer",
                 new Version(1, 0, 0, null, "eu.luminis.elastic", "aggregation-elastic"));
         module.addDeserializer(Aggregation.class, deserializer);

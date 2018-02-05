@@ -5,7 +5,6 @@ import eu.luminis.elastic.cluster.response.ClusterHealth;
 
 import org.apache.http.HttpEntity;
 import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import static eu.luminis.elastic.RequestMethod.GET;
 
@@ -24,13 +22,11 @@ import static eu.luminis.elastic.RequestMethod.GET;
 public class ClusterService {
     private static final Logger logger = LoggerFactory.getLogger(ClusterService.class);
 
-    private final RestClient client;
-    private final ObjectMapper jacksonObjectMapper;
     private final ClusterManagementService clusterManagementService;
+    private final ObjectMapper jacksonObjectMapper;
 
     @Autowired
-    public ClusterService(RestClient client, ObjectMapper jacksonObjectMapper, ClusterManagementService clusterManagementService) {
-        this.client = client;
+    public ClusterService(ClusterManagementService clusterManagementService, ObjectMapper jacksonObjectMapper) {
         this.jacksonObjectMapper = jacksonObjectMapper;
         this.clusterManagementService = clusterManagementService;
     }
@@ -42,7 +38,7 @@ public class ClusterService {
      */
     public ClusterHealth checkClusterHealth() {
         try {
-            Response response = client.performRequest(GET, "/_cluster/health");
+            Response response = clusterManagementService.getCurrentClient().performRequest(GET, "/_cluster/health");
 
             HttpEntity entity = response.getEntity();
 
@@ -57,11 +53,9 @@ public class ClusterService {
     /**
      * Get the current cluster that is active at the moment
      * @return the current cluster
-     * @throws IllegalStateException if no current cluster has been set (see {@link #setCurrentCluster(String)}).
      */
     public Cluster getCurrentCluster() {
-        Optional<Cluster> cluster = clusterManagementService.getCurrentCluster();
-        return cluster.orElseThrow(() -> new IllegalStateException("Current cluster has not been set yet"));
+        return clusterManagementService.getCurrentCluster();
     }
 
     /**

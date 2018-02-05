@@ -1,11 +1,12 @@
 package eu.luminis.elastic.cluster;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import org.apache.http.Header;
@@ -30,25 +31,42 @@ public class ClusterManagementService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterManagementService.class);
     private static final String HEADER_CONTENT_TYPE_KEY = "Content-Type";
     private static final String DEFAULT_HEADER_CONTENT_TYPE = "application/json";
+    private static final String DEFAULT_CLUSTER_NAME = "default-cluster";
 
     private LoggingFailureListener loggingFailureListener;
     private Map<String, Cluster> clusters = new HashMap<>();
     private Cluster currentCluster;
+    private List<String> hostnames;
 
     @Value("${enableSniffer:true}")
     private boolean enableSniffer = true;
 
     @Autowired
-    public ClusterManagementService(LoggingFailureListener loggingFailureListener) {
+    public ClusterManagementService(@Value("${eu.luminis.elastic.hostnames:#{\"localhost:9200\"}}") String[] hostnames,
+            LoggingFailureListener loggingFailureListener) {
         this.loggingFailureListener = loggingFailureListener;
+        this.hostnames = Arrays.asList(hostnames);
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        addCluster(DEFAULT_CLUSTER_NAME, hostnames).getClient();
+        setCurrentCluster(DEFAULT_CLUSTER_NAME);
     }
 
     /**
      * Gets the current cluster - there can only be one current cluster at a time.
-     * @return the current cluster that the service is working with, or an empty Optional if no cluster has been set.
+     * @return the current cluster that the service is working with.
      */
-    public Optional<Cluster> getCurrentCluster() {
-        return (currentCluster == null) ? Optional.empty() : Optional.of(currentCluster);
+    public Cluster getCurrentCluster() {
+        return currentCluster;
+    }
+
+    /**
+     * @return the {@link RestClient} connecting to the current cluster
+     */
+    public RestClient getCurrentClient() {
+        return currentCluster.getClient();
     }
 
     /**
@@ -86,12 +104,15 @@ public class ClusterManagementService {
      * @return the closed cluster.
      */
     public Cluster deleteCluster(String clusterName) {
-        return closeCluster(clusterName);
+        Cluster cluster = closeCluster(clusterName);
+        clusters.remove(clusterName);
+        return cluster;
     }
 
     @PreDestroy
     protected void tearDown() {
         clusters.keySet().forEach(this::closeCluster);
+        clusters.clear();
     }
 
     private boolean exists(String clusterName) {
@@ -127,7 +148,7 @@ public class ClusterManagementService {
                 LOGGER.error(error, ex);
                 throw new ClusterApiException(error, ex);
             }
-            return clusters.remove(clusterName);
+            return cluster;
         } else {
             return null;
         }

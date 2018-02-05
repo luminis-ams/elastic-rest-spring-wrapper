@@ -1,6 +1,8 @@
 package eu.luminis.elastic.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import eu.luminis.elastic.cluster.ClusterManagementService;
 import eu.luminis.elastic.document.QueryExecutionException;
 import eu.luminis.elastic.search.response.HitsResponse;
 import eu.luminis.elastic.search.response.aggregations.metric.MetricResponse;
@@ -8,7 +10,6 @@ import eu.luminis.elastic.search.response.HitsAggsResponse;
 import eu.luminis.elastic.search.response.query.ElasticQueryResponse;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +33,12 @@ import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
 public class SearchService {
     private static final Logger logger = LoggerFactory.getLogger(SearchService.class);
 
-    private final RestClient client;
+    private final ClusterManagementService clusterManagementService;
     private final ObjectMapper jacksonObjectMapper;
 
     @Autowired
-    public SearchService(RestClient client, ObjectMapper jacksonObjectMapper) {
-        this.client = client;
+    public SearchService(ClusterManagementService clusterManagementService, ObjectMapper jacksonObjectMapper) {
+        this.clusterManagementService = clusterManagementService;
         this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
@@ -98,7 +99,7 @@ public class SearchService {
      */
     public Long countByIndex(String indexName) {
         try {
-            Response response = client.performRequest(GET, indexName + "/_count");
+            Response response = clusterManagementService.getCurrentClient().performRequest(GET, indexName + "/_count");
 
             return jacksonObjectMapper.readValue(response.getEntity().getContent(), MetricResponse.class).getCount();
 
@@ -112,7 +113,7 @@ public class SearchService {
     private <T> ElasticQueryResponse<T> doExecuteQuery(SearchByTemplateRequest request) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("typed_keys", null);
-        Response response = client.performRequest(
+        Response response = clusterManagementService.getCurrentClient().performRequest(
                 GET,
                 request.getIndexName() + "/_search",
                 params,

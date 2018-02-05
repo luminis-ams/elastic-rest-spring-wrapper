@@ -23,7 +23,7 @@ public class ClusterManagementServiceTest {
     @Mock
     private LoggingFailureListener loggingFailureListener;
     @InjectMocks
-    private ClusterManagementService clusterManagementService = new ClusterManagementService(loggingFailureListener);
+    private ClusterManagementService clusterManagementService = new ClusterManagementService(HOSTS.toArray(new String[HOSTS.size()]), loggingFailureListener);
 
     @Test
     public void testAddCluster() {
@@ -43,9 +43,9 @@ public class ClusterManagementServiceTest {
     public void testGetCurrentCluster() {
         clusterManagementService.addCluster(CLUSTER_NAME, HOSTS);
 
-        assertThat(clusterManagementService.getCurrentCluster().isPresent()).isFalse();
+        assertThat(clusterManagementService.getCurrentCluster()).isNull();
         clusterManagementService.setCurrentCluster(CLUSTER_NAME);
-        assertThat(clusterManagementService.getCurrentCluster().isPresent()).isTrue();
+        assertThat(clusterManagementService.getCurrentCluster()).isNotNull();
     }
 
     @Test

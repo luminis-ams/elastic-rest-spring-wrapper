@@ -2,13 +2,13 @@ package eu.luminis.elastic.index;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.cluster.ClusterApiException;
+import eu.luminis.elastic.cluster.ClusterManagementService;
 import eu.luminis.elastic.document.QueryExecutionException;
 import eu.luminis.elastic.document.response.Shards;
 import eu.luminis.elastic.index.response.RefreshResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,18 +25,18 @@ import java.util.Hashtable;
 public class IndexService {
     private static final Logger logger = LoggerFactory.getLogger(IndexService.class);
 
-    private final RestClient client;
+    private final ClusterManagementService clusterManagementService;
     private final ObjectMapper jacksonObjectMapper;
 
     @Autowired
-    public IndexService(RestClient client, ObjectMapper jacksonObjectMapper) {
-        this.client = client;
+    public IndexService(ClusterManagementService clusterManagementService, ObjectMapper jacksonObjectMapper) {
+        this.clusterManagementService = clusterManagementService;
         this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
     public Boolean indexExist(String indexName) {
         try {
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getCurrentClient().performRequest(
                     "HEAD",
                     indexName
             );
@@ -60,7 +60,7 @@ public class IndexService {
     public void createIndex(String indexName, String requestBody) {
         try {
             HttpEntity entity = new StringEntity(requestBody);
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getCurrentClient().performRequest(
                     "PUT",
                     indexName,
                     new Hashtable<>(),
@@ -83,7 +83,7 @@ public class IndexService {
 
     public void dropIndex(String indexName) {
         try {
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getCurrentClient().performRequest(
                     "DELETE",
                     indexName);
 
@@ -106,7 +106,7 @@ public class IndexService {
                 endpoint = "/" + String.join(",", names) + endpoint;
             }
 
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getCurrentClient().performRequest(
                     "POST",
                     endpoint
             );

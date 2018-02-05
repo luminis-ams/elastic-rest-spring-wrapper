@@ -1,13 +1,14 @@
 package eu.luminis.elastic.document;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import eu.luminis.elastic.cluster.ClusterManagementService;
 import eu.luminis.elastic.document.response.GetByIdResponse;
 import eu.luminis.elastic.document.response.IndexResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +33,12 @@ import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
 public class DocumentService {
     private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
 
-    private final RestClient client;
+    private final ClusterManagementService clusterManagementService;
     private final ObjectMapper jacksonObjectMapper;
 
     @Autowired
-    public DocumentService(RestClient client, ObjectMapper jacksonObjectMapper) {
-        this.client = client;
+    public DocumentService(ClusterManagementService clusterManagementService, ObjectMapper jacksonObjectMapper) {
+        this.clusterManagementService = clusterManagementService;
         this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
@@ -56,7 +57,7 @@ public class DocumentService {
         try {
             String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
 
-            Response response = client.performRequest(GET, endpoint, getRequestParams(request));
+            Response response = clusterManagementService.getCurrentClient().performRequest(GET, endpoint, getRequestParams(request));
 
             GetByIdResponse<T> queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
 
@@ -93,7 +94,7 @@ public class DocumentService {
     public Boolean exists(ExistsRequest request) {
         try {
             String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
-            Response response = client.performRequest(HEAD, endpoint);
+            Response response = clusterManagementService.getCurrentClient().performRequest(HEAD, endpoint);
 
             int statusCode = response.getStatusLine().getStatusCode();
 
@@ -153,7 +154,7 @@ public class DocumentService {
                     !exists(new ExistsRequest(request.getIndex(), request.getType(), request.getId()))) {
                 return "not_exists";
             }
-            Response response = client.performRequest(DELETE, endpoint);
+            Response response = clusterManagementService.getCurrentClient().performRequest(DELETE, endpoint);
 
             return response.getStatusLine().getReasonPhrase();
         } catch (IOException e) {
@@ -173,7 +174,7 @@ public class DocumentService {
         WrappedEntity entity = new WrappedEntity(request.getEntity());
         try {
             HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(entity), Charset.defaultCharset());
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getCurrentClient().performRequest(
                     POST,
                     endpoint,
                     getRequestParams(request),
@@ -198,7 +199,7 @@ public class DocumentService {
     private String doIndex(IndexRequest request, String method, String endpoint) {
         try {
             HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(request.getEntity()), Charset.defaultCharset());
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getCurrentClient().performRequest(
                     method,
                     endpoint,
                     getRequestParams(request),
