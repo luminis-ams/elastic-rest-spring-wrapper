@@ -1,18 +1,19 @@
 package eu.luminis.elastic.search;
 
 import eu.luminis.elastic.IndexDocumentHelper;
-import eu.luminis.elastic.RestClientConfig;
+import eu.luminis.elastic.SingleClusterRestClientConfig;
+import eu.luminis.elastic.TestConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexService;
+import eu.luminis.elastic.search.response.HitsAggsResponse;
 import eu.luminis.elastic.search.response.aggregations.Aggregation;
-import eu.luminis.elastic.search.response.aggregations.metric.SingleValueMetricsAggregation;
 import eu.luminis.elastic.search.response.aggregations.bucket.DateHistogramAggregation;
 import eu.luminis.elastic.search.response.aggregations.bucket.DateHistogramBucket;
 import eu.luminis.elastic.search.response.aggregations.bucket.HistogramAggregation;
 import eu.luminis.elastic.search.response.aggregations.bucket.HistogramBucket;
-import eu.luminis.elastic.search.response.HitsAggsResponse;
 import eu.luminis.elastic.search.response.aggregations.bucket.TermsAggregation;
+import eu.luminis.elastic.search.response.aggregations.metric.SingleValueMetricsAggregation;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,9 +25,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
+import static eu.luminis.elastic.SingleClusterRestClientFactoryBean.DEFAULT_CLUSTER_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -34,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = RestClientConfig.class)
+@ContextConfiguration(classes = {SingleClusterRestClientConfig.class, TestConfig.class})
 public class SearchServiceAggsIT {
     public static final String TEST_AGGS = "test_aggs";
     public static final int NUM_DAYS_TO_SUBTRACT_1 = 1;
@@ -49,13 +51,13 @@ public class SearchServiceAggsIT {
     private IndexDocumentHelper indexDocumentHelper;
 
     @Autowired
-    private SearchService searchService;
+    private SingleClusterSearchService searchService;
 
     @Before
     public void setUp() throws Exception {
-        Boolean test_aggs = indexService.indexExist("test_aggs");
+        Boolean test_aggs = indexService.indexExist(DEFAULT_CLUSTER_NAME, "test_aggs");
         if (test_aggs) {
-            indexService.dropIndex(TEST_AGGS);
+            indexService.dropIndex(DEFAULT_CLUSTER_NAME, TEST_AGGS);
         }
         String indexProps = "{\n" +
                 "  \"settings\": {\n" +
@@ -81,15 +83,15 @@ public class SearchServiceAggsIT {
                 "    }\n" +
                 "  }\n" +
                 "}";
-        indexService.createIndex(TEST_AGGS, indexProps);
-        test_aggs = indexService.indexExist("test_aggs");
+        indexService.createIndex(DEFAULT_CLUSTER_NAME, TEST_AGGS, indexProps);
+        test_aggs = indexService.indexExist(DEFAULT_CLUSTER_NAME, "test_aggs");
         assertTrue("The index should now exist", test_aggs);
 
-        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "one", "message one", Arrays.asList("news"), 1970L, createDate(NUM_DAYS_TO_SUBTRACT_1));
-        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "two", "message two", Arrays.asList("blog"), 1980L, createDate(NUM_DAYS_TO_SUBTRACT_1));
-        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "three", "message three", Arrays.asList("news"), 1985L, createDate(NUM_DAYS_TO_SUBTRACT_2));
-        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "four", "message four", Arrays.asList("twitter"), 2000, createDate(NUM_DAYS_TO_SUBTRACT_5));
-        indexService.refreshIndexes(TEST_AGGS);
+        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "one", "message one", Collections.singletonList("news"), 1970L, createDate(NUM_DAYS_TO_SUBTRACT_1));
+        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "two", "message two", Collections.singletonList("blog"), 1980L, createDate(NUM_DAYS_TO_SUBTRACT_1));
+        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "three", "message three", Collections.singletonList("news"), 1985L, createDate(NUM_DAYS_TO_SUBTRACT_2));
+        indexDocumentHelper.indexDocument(TEST_AGGS, "test_agg", "four", "message four", Collections.singletonList("twitter"), 2000, createDate(NUM_DAYS_TO_SUBTRACT_5));
+        indexService.refreshIndexes(DEFAULT_CLUSTER_NAME, TEST_AGGS);
     }
 
     @Test
@@ -148,7 +150,7 @@ public class SearchServiceAggsIT {
         doCalculateYearPerTag((key, value) -> {
             switch (key) {
                 case "news":
-                    assertEquals((1970D + 1985D)/2D, value, 0.01);
+                    assertEquals((1970D + 1985D) / 2D, value, 0.01);
                     break;
                 case "blog":
                     assertEquals(1980D, value, 0.01);
@@ -245,10 +247,6 @@ public class SearchServiceAggsIT {
         }, "terms_calculated_value_count.twig");
     }
 
-    private interface CheckCalculaterAggregation {
-        void check(String key, Double value);
-    }
-
     private void doCalculateYearPerTag(CheckCalculaterAggregation check, String template) {
         SearchByTemplateRequest request = SearchByTemplateRequest.create()
                 .setIndexName(TEST_AGGS)
@@ -272,7 +270,7 @@ public class SearchServiceAggsIT {
             Double value = singleValueMetricsAggregation.getValue();
 
             String key = bucket.getKey();
-            check.check(key,value);
+            check.check(key, value);
         });
     }
 
@@ -368,7 +366,6 @@ public class SearchServiceAggsIT {
         });
     }
 
-
     private void checkHistoBucket(HistogramBucket bucket, long expectedCount, String expectedKey) {
         assertEquals(expectedCount, bucket.getDocCount().longValue());
         assertEquals(expectedKey, bucket.getKey());
@@ -407,5 +404,9 @@ public class SearchServiceAggsIT {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE;
 
         return newDate.format(formatter);
+    }
+
+    private interface CheckCalculaterAggregation {
+        void check(String key, Double value);
     }
 }

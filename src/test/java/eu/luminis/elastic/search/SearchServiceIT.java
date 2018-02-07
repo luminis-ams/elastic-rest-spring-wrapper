@@ -1,7 +1,8 @@
 package eu.luminis.elastic.search;
 
 import eu.luminis.elastic.IndexDocumentHelper;
-import eu.luminis.elastic.RestClientConfig;
+import eu.luminis.elastic.SingleClusterRestClientConfig;
+import eu.luminis.elastic.TestConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityTypeReference;
 import eu.luminis.elastic.index.IndexService;
@@ -16,25 +17,26 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.util.ArrayList;
 import java.util.List;
 
+import static eu.luminis.elastic.SingleClusterRestClientFactoryBean.DEFAULT_CLUSTER_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = RestClientConfig.class)
+@ContextConfiguration(classes = {SingleClusterRestClientConfig.class, TestConfig.class})
 public class SearchServiceIT {
 
     private final static String INDEX = "search_index";
     private final static String TYPE = "search_type";
 
     @Autowired
-    private SearchService searchService;
-
-    @Autowired
     private IndexService indexService;
 
     @Autowired
     private IndexDocumentHelper indexDocumentHelper;
+
+    @Autowired
+    private SingleClusterSearchService searchService;
 
     @Before
     public void setUp() throws Exception {
@@ -48,7 +50,7 @@ public class SearchServiceIT {
         indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_8", "Eighth document about elastic", 2008L);
         indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_10", "Ninth document about elasticsearch", 2010L);
         indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_5", "Tenth document about elastic", 2005L);
-        indexService.refreshIndexes(INDEX);
+        indexService.refreshIndexes(DEFAULT_CLUSTER_NAME, INDEX);
     }
 
     @Test

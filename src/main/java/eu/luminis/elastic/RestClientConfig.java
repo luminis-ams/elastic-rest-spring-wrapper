@@ -18,7 +18,14 @@ import org.springframework.context.annotation.Configuration;
  * Configuration class
  */
 @Configuration
-@ComponentScan("eu.luminis.elastic")
+@ComponentScan({
+        "eu.luminis.elastic.cluster",
+        "eu.luminis.elastic.document",
+        "eu.luminis.elastic.helper",
+        "eu.luminis.elastic.index",
+        "eu.luminis.elastic.search",
+        "eu.luminis.elastic.monitoring"
+})
 public class RestClientConfig {
 
     @Autowired
@@ -33,7 +40,6 @@ public class RestClientConfig {
         deserializer.register("min", SingleValueMetricsAggregation.class);
         deserializer.register("cardinality", SingleValueMetricsAggregation.class);
         deserializer.register("value_count", SingleValueMetricsAggregation.class);
-
 
         SimpleModule module = new SimpleModule("AggregationDeserializer",
                 new Version(1, 0, 0, null, "eu.luminis.elastic", "aggregation-elastic"));

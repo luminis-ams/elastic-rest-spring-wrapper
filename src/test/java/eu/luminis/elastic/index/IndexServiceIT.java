@@ -1,6 +1,7 @@
 package eu.luminis.elastic.index;
 
-import eu.luminis.elastic.RestClientConfig;
+import eu.luminis.elastic.SingleClusterRestClientConfig;
+import eu.luminis.elastic.TestConfig;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,14 +11,14 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = RestClientConfig.class)
+@ContextConfiguration(classes = {SingleClusterRestClientConfig.class, TestConfig.class})
 public class IndexServiceIT {
 
     @Autowired
-    private IndexService indexService;
+    private SingleClusterIndexService indexService;
 
     @Test
-    public void createIndex() throws Exception {
+    public void createIndex() {
         Boolean test_create = indexService.indexExist("test_create");
         if (test_create) {
             indexService.dropIndex("test_create");
@@ -28,7 +29,7 @@ public class IndexServiceIT {
     }
 
     @Test
-    public void refreshIndexes() throws Exception {
+    public void refreshIndexes() {
         if (!indexService.indexExist("test_refresh")) {
             indexService.createIndex("test_refresh", "{}");
         }

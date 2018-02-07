@@ -1,13 +1,13 @@
 package eu.luminis.elastic.document;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import eu.luminis.elastic.cluster.ClusterManagementService;
 import eu.luminis.elastic.document.response.GetByIdResponse;
 import eu.luminis.elastic.document.response.IndexResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseException;
-import org.elasticsearch.client.RestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,12 +32,12 @@ import static eu.luminis.elastic.helper.AddIdHelper.addIdToEntity;
 public class DocumentService {
     private static final Logger logger = LoggerFactory.getLogger(DocumentService.class);
 
-    private final RestClient client;
+    private final ClusterManagementService clusterManagementService;
     private final ObjectMapper jacksonObjectMapper;
 
     @Autowired
-    public DocumentService(RestClient client, ObjectMapper jacksonObjectMapper) {
-        this.client = client;
+    public DocumentService(ClusterManagementService clusterManagementService, ObjectMapper jacksonObjectMapper) {
+        this.clusterManagementService = clusterManagementService;
         this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
@@ -45,18 +45,19 @@ public class DocumentService {
      * By specifying the unique identification of an object we can return only that object. If we cannot find the object
      * we throw an {@link QueryByIdNotFoundException}.
      *
-     * @param request Object containing the required parameters
-     * @param <T>     Type of the object to be mapped to
+     * @param clusterName Name of the cluster to connect to
+     * @param request     Object containing the required parameters
+     * @param <T>         Type of the object to be mapped to
      * @return Found object of type T
      */
-    public <T> T queryById(QueryByIdRequest request) {
+    public <T> T queryById(String clusterName, QueryByIdRequest request) {
         if (request.getTypeReference() == null) {
             throw new QueryExecutionException("The TypeReference in the request cannot be null");
         }
         try {
             String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
 
-            Response response = client.performRequest(GET, endpoint, getRequestParams(request));
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(GET, endpoint, getRequestParams(request));
 
             GetByIdResponse<T> queryResponse = jacksonObjectMapper.readValue(response.getEntity().getContent(), request.getTypeReference());
 
@@ -87,13 +88,14 @@ public class DocumentService {
     /**
      * Checks if the provided document exists or not. If we can find the document true is returned, else false
      *
-     * @param request ExistsRequest that must contain an index, type and id to check if the document exists
+     * @param clusterName Name of the cluster to connect to
+     * @param request     ExistsRequest that must contain an index, type and id to check if the document exists
      * @return Boolean true if the document exists, false otherwise
      */
-    public Boolean exists(ExistsRequest request) {
+    public Boolean exists(String clusterName, ExistsRequest request) {
         try {
             String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
-            Response response = client.performRequest(HEAD, endpoint);
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(HEAD, endpoint);
 
             int statusCode = response.getStatusLine().getStatusCode();
 
@@ -109,10 +111,11 @@ public class DocumentService {
      * Index the provided document using the provided parameters. If an id is provided we do an update, of no id is
      * provided we do an insert and we return the id.
      *
-     * @param request Object containing the required parameters
+     * @param clusterName Name of the cluster to connect to
+     * @param request     Object containing the required parameters
      * @return Generated ID
      */
-    public String index(IndexRequest request) {
+    public String index(String clusterName, IndexRequest request) {
         String method;
         String endpoint;
         if (request.getId() != null) {
@@ -123,37 +126,39 @@ public class DocumentService {
             endpoint = createGenerateIdEndpointString(request.getIndex(), request.getType());
         }
 
-        return doIndex(request, method, endpoint);
+        return doIndex(clusterName, request, method, endpoint);
     }
 
     /**
      * Throws an exception if the provided request contains an id that already exists.
      *
-     * @param request IndexRequest containing the entity to index
+     * @param clusterName Name of the cluster to connect to
+     * @param request     IndexRequest containing the entity to index
      * @return The id of the object, which is the same as the one you have provided.
      */
-    public String create(IndexRequest request) {
+    public String create(String clusterName, IndexRequest request) {
         if (request.getId() == null) {
             throw new QueryExecutionException("Executing create request without an id");
         }
         String endpoint = createEndpointCreateString(request.getIndex(), request.getType(), request.getId());
-        return doIndex(request, PUT, endpoint);
+        return doIndex(clusterName, request, PUT, endpoint);
     }
 
     /**
      * Removes the document with the provided unique identification.
      *
-     * @param request Request object containing the required parameters
+     * @param clusterName Name of the cluster to connect to
+     * @param request     Request object containing the required parameters
      * @return Message line that can be used to see if we succeeded.
      */
-    public String remove(DeleteRequest request) {
+    public String remove(String clusterName, DeleteRequest request) {
         try {
             String endpoint = createEndpointString(request.getIndex(), request.getType(), request.getId());
             if (!request.isMustExist() &&
-                    !exists(new ExistsRequest(request.getIndex(), request.getType(), request.getId()))) {
+                    !exists(clusterName, new ExistsRequest(request.getIndex(), request.getType(), request.getId()))) {
                 return "not_exists";
             }
-            Response response = client.performRequest(DELETE, endpoint);
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(DELETE, endpoint);
 
             return response.getStatusLine().getReasonPhrase();
         } catch (IOException e) {
@@ -165,15 +170,16 @@ public class DocumentService {
     /**
      * Updates the document as specified in the provided UpdateRequest.
      *
-     * @param request UpdateRequest containing the required information to execute an update
-     * @return
+     * @param clusterName Name of the cluster to connect to
+     * @param request     UpdateRequest containing the required information to execute an update
+     * @return The id of the updated document
      */
-    public String update(UpdateRequest request) {
+    public String update(String clusterName, UpdateRequest request) {
         String endpoint = createEndpointUpdateString(request.getIndex(), request.getType(), request.getId());
         WrappedEntity entity = new WrappedEntity(request.getEntity());
         try {
             HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(entity), Charset.defaultCharset());
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(
                     POST,
                     endpoint,
                     getRequestParams(request),
@@ -195,10 +201,10 @@ public class DocumentService {
 
     }
 
-    private String doIndex(IndexRequest request, String method, String endpoint) {
+    private String doIndex(String clusterName, IndexRequest request, String method, String endpoint) {
         try {
             HttpEntity requestBody = new StringEntity(jacksonObjectMapper.writeValueAsString(request.getEntity()), Charset.defaultCharset());
-            Response response = client.performRequest(
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(
                     method,
                     endpoint,
                     getRequestParams(request),

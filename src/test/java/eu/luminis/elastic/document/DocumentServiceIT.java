@@ -1,7 +1,8 @@
 package eu.luminis.elastic.document;
 
 import eu.luminis.elastic.IndexDocumentHelper;
-import eu.luminis.elastic.RestClientConfig;
+import eu.luminis.elastic.SingleClusterRestClientConfig;
+import eu.luminis.elastic.TestConfig;
 import eu.luminis.elastic.document.helpers.MessageEntity;
 import eu.luminis.elastic.document.helpers.MessageEntityByIdTypeReference;
 import eu.luminis.elastic.index.IndexService;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import static eu.luminis.elastic.SingleClusterRestClientFactoryBean.DEFAULT_CLUSTER_NAME;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -19,7 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = RestClientConfig.class)
+@ContextConfiguration(classes = {SingleClusterRestClientConfig.class, TestConfig.class})
 public class DocumentServiceIT {
 
     private static final String INDEX = "inttests";
@@ -28,7 +30,7 @@ public class DocumentServiceIT {
     private static final String EXISTING_ID_1_MESSAGE = "This is a message";
 
     @Autowired
-    private DocumentService documentService;
+    private SingleClusterDocumentService documentService;
 
     @Autowired
     private IndexService indexService;
@@ -36,17 +38,18 @@ public class DocumentServiceIT {
     @Autowired
     private IndexDocumentHelper indexDocumentHelper;
 
+
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         indexDocumentHelper.indexDocument(INDEX, TYPE, EXISTING_ID_1, EXISTING_ID_1_MESSAGE);
         indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_1", "This is a document about elastic");
         indexDocumentHelper.indexDocument(INDEX, TYPE, "elastic_2", "Another document about elastic");
 
-        indexService.refreshIndexes(INDEX);
+        indexService.refreshIndexes(DEFAULT_CLUSTER_NAME, INDEX);
     }
 
     @Test
-    public void querybyId() throws Exception {
+    public void querybyId() {
         QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, EXISTING_ID_1);
         request.setTypeReference(new MessageEntityByIdTypeReference());
         request.setRefresh(Refresh.NOW);
@@ -57,7 +60,7 @@ public class DocumentServiceIT {
     }
 
     @Test
-    public void querybyId_addId() throws Exception {
+    public void querybyId_addId() {
         QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, EXISTING_ID_1);
         request.setAddId(true);
         request.setTypeReference(new MessageEntityByIdTypeReference());
@@ -70,7 +73,7 @@ public class DocumentServiceIT {
     }
 
     @Test
-    public void querybyId_NonExistingId() throws Exception {
+    public void querybyId_NonExistingId() {
         QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, "non_existing");
         request.setTypeReference(new MessageEntityByIdTypeReference());
         try {
@@ -84,7 +87,7 @@ public class DocumentServiceIT {
     }
 
     @Test
-    public void querybyId_NoTypeReference() throws Exception {
+    public void querybyId_NoTypeReference() {
         QueryByIdRequest request = new QueryByIdRequest(INDEX, TYPE, "non_existing");
         try {
             documentService.queryById(request);
@@ -95,7 +98,7 @@ public class DocumentServiceIT {
     }
 
     @Test(expected = QueryByIdNotFoundException.class)
-    public void querybyId_NonExistingIndex() throws Exception {
+    public void querybyId_NonExistingIndex() {
         QueryByIdRequest request = new QueryByIdRequest("NonExisting", TYPE, EXISTING_ID_1);
         request.setTypeReference(new MessageEntityByIdTypeReference());
 
