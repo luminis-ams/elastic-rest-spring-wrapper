@@ -18,7 +18,14 @@ import org.springframework.context.annotation.Configuration;
  * Configuration class
  */
 @Configuration
-@ComponentScan("eu.luminis.elastic")
+@ComponentScan({
+        "eu.luminis.elastic.cluster",
+        "eu.luminis.elastic.document",
+        "eu.luminis.elastic.helper",
+        "eu.luminis.elastic.index",
+        "eu.luminis.elastic.search",
+        "eu.luminis.elastic.monitoring"
+})
 public class RestClientConfig {
 
     @Autowired

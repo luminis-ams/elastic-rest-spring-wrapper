@@ -2,7 +2,6 @@ package eu.luminis.elastic.cluster;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.luminis.elastic.cluster.response.ClusterHealth;
-
 import org.apache.http.HttpEntity;
 import org.elasticsearch.client.Response;
 import org.slf4j.Logger;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import static eu.luminis.elastic.RequestMethod.GET;
 
@@ -34,11 +34,12 @@ public class ClusterService {
     /**
      * Returns the current health of the cluster as a {@link ClusterHealth} object.
      *
+     * @param clusterName Name of the cluster to check the health for
      * @return ClusterHealth containing the basic properties of the health of the cluster
      */
-    public ClusterHealth checkClusterHealth() {
+    public ClusterHealth checkClusterHealth(String clusterName) {
         try {
-            Response response = clusterManagementService.getCurrentClient().performRequest(GET, "/_cluster/health");
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(GET, "/_cluster/health");
 
             HttpEntity entity = response.getEntity();
 
@@ -51,38 +52,30 @@ public class ClusterService {
     }
 
     /**
-     * Get the current cluster that is active at the moment
-     * @return the current cluster
+     * Returns the set of available clusters by name provided when registering the cluster.
+     *
+     * @return The names of the available clusters
      */
-    public Cluster getCurrentCluster() {
-        return clusterManagementService.getCurrentCluster();
-    }
-
-    /**
-     * Set the current cluster.
-     * @param clusterName the name of the cluster. Make sure that the given clusterName has been added before using {@link #addCluster(String, List)}}.
-     * @return the corresponding {@link Cluster} object if a cluster exists by that name, else return the current cluster that was already set.
-     */
-    public Cluster setCurrentCluster(String clusterName) {
-        return clusterManagementService.setCurrentCluster(clusterName);
+    public Set<String> getAvailableClusters() {
+        return this.clusterManagementService.listAvailableClusters();
     }
 
     /**
      * Add a new cluster to be managed.
+     *
      * @param clusterName the name of the cluster.
-     * @param hosts the hosts within that cluster.
-     * @return the cluster that has just been added, or null if the clusterName was already present.
+     * @param hosts       the hosts within that cluster.
      */
-    public Cluster addCluster(String clusterName, List<String> hosts) {
-        return clusterManagementService.addCluster(clusterName, hosts);
+    public void addCluster(String clusterName, List<String> hosts, boolean enableSniffer) {
+        clusterManagementService.addCluster(clusterName, hosts, enableSniffer);
     }
 
     /**
      * Delete a cluster. Also closes any active connections that may exist with this cluster.
+     *
      * @param clusterName the name of the cluster.
-     * @return the closed cluster.
      */
-    public Cluster deleteCluster(String clusterName) {
-        return clusterManagementService.deleteCluster(clusterName);
+    public void deleteCluster(String clusterName) {
+        clusterManagementService.deleteCluster(clusterName);
     }
 }

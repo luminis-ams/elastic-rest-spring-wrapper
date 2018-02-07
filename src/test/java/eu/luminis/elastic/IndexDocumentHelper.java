@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Date;
 import java.util.List;
 
+import static eu.luminis.elastic.SingleClusterRestClientFactoryBean.DEFAULT_CLUSTER_NAME;
+
 public class IndexDocumentHelper {
     @Autowired
     private DocumentService documentService;
@@ -36,7 +38,7 @@ public class IndexDocumentHelper {
         IndexRequest indexRequest = new IndexRequest(index, type, id);
         indexRequest.setEntity(messageEntity);
 
-        documentService.index(indexRequest);
+        documentService.index(DEFAULT_CLUSTER_NAME, indexRequest);
     }
 
 }

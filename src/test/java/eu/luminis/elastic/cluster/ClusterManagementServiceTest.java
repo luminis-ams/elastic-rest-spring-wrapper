@@ -20,38 +20,20 @@ public class ClusterManagementServiceTest {
     private static final String NON_EXISTENT_CLUSTER_NAME = "non-existent-cluster";
     private static final List<String> HOSTS = Collections.singletonList("localhost:9200");
 
-    @Mock
-    private LoggingFailureListener loggingFailureListener;
     @InjectMocks
-    private ClusterManagementService clusterManagementService = new ClusterManagementService(HOSTS.toArray(new String[HOSTS.size()]), loggingFailureListener);
+    private ClusterManagementService clusterManagementService = new ClusterManagementService();
 
     @Test
     public void testAddCluster() {
-        assertThat(clusterManagementService.addCluster(CLUSTER_NAME, HOSTS)).isNotNull();
-        assertThat(clusterManagementService.addCluster(CLUSTER_NAME, HOSTS)).isNull();
+        assertThat(clusterManagementService.addCluster(CLUSTER_NAME, HOSTS, false)).isNotNull();
+        assertThat(clusterManagementService.addCluster(CLUSTER_NAME, HOSTS, false)).isNull();
     }
 
     @Test
     public void testDeleteCluster() {
-        clusterManagementService.addCluster(CLUSTER_NAME, HOSTS);
+        clusterManagementService.addCluster(CLUSTER_NAME, HOSTS,false );
 
         assertThat(clusterManagementService.deleteCluster(NON_EXISTENT_CLUSTER_NAME)).isNull();
         assertThat(clusterManagementService.deleteCluster(CLUSTER_NAME)).isNotNull();
-    }
-
-    @Test
-    public void testGetCurrentCluster() {
-        clusterManagementService.addCluster(CLUSTER_NAME, HOSTS);
-
-        assertThat(clusterManagementService.getCurrentCluster()).isNull();
-        clusterManagementService.setCurrentCluster(CLUSTER_NAME);
-        assertThat(clusterManagementService.getCurrentCluster()).isNotNull();
-    }
-
-    @Test
-    public void testSetCurrentCluster() {
-        assertThat(clusterManagementService.setCurrentCluster(CLUSTER_NAME)).isNull();
-        clusterManagementService.addCluster(CLUSTER_NAME, HOSTS);
-        assertThat(clusterManagementService.setCurrentCluster(CLUSTER_NAME)).isNotNull();
     }
 }

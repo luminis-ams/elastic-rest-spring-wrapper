@@ -1,12 +1,11 @@
 package eu.luminis.elastic.search;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import eu.luminis.elastic.cluster.ClusterManagementService;
 import eu.luminis.elastic.document.QueryExecutionException;
+import eu.luminis.elastic.search.response.HitsAggsResponse;
 import eu.luminis.elastic.search.response.HitsResponse;
 import eu.luminis.elastic.search.response.aggregations.metric.MetricResponse;
-import eu.luminis.elastic.search.response.HitsAggsResponse;
 import eu.luminis.elastic.search.response.query.ElasticQueryResponse;
 import org.apache.http.entity.StringEntity;
 import org.elasticsearch.client.Response;
@@ -45,15 +44,16 @@ public class SearchService {
     /**
      * Executes a search query using the provided template
      *
+     * @param clusterName Name of the cluster to execute the query against
      * @param request Object containing the required parameters to execute the request
      * @param <T>     Type of resulting objects, must be mapped from json result into java entity
      * @return List of mapped objects
      */
-    public <T> HitsResponse<T> queryByTemplate(SearchByTemplateRequest request) {
+    public <T> HitsResponse<T> queryByTemplate(String clusterName, SearchByTemplateRequest request) {
         Assert.notNull(request, "Need to provide a SearchByTemplateRequest object");
 
         try {
-            ElasticQueryResponse<T> elasticQueryResponse = doExecuteQuery(request);
+            ElasticQueryResponse<T> elasticQueryResponse = doExecuteQuery(clusterName, request);
             HitsResponse<T> hitsResponse = new HitsResponse<>();
 
             putInfoFromQueryIntoHitsResponse(request, elasticQueryResponse, hitsResponse);
@@ -69,17 +69,18 @@ public class SearchService {
      * Executes a search request with the provided query, but expects an aggregation part in the query. It will not
      * fail in case you do not provide an aggregation.
      *
+     * @param clusterName Name of the cluster to execute the query against
      * @param request Object containing the required parameters to execute the request
      * @param <T>     Type of resulting objects, must be mapped from json result into java entity
      * @return Object containing the list of objects and/or the aggregations
      */
-    public <T> HitsAggsResponse<T> aggsByTemplate(SearchByTemplateRequest request) {
+    public <T> HitsAggsResponse<T> aggsByTemplate(String clusterName, SearchByTemplateRequest request) {
         Assert.notNull(request, "Need to provide a SearchByTemplateRequest object");
 
         try {
-            ElasticQueryResponse<T> elasticQueryResponse = doExecuteQuery(request);
+            ElasticQueryResponse<T> elasticQueryResponse = doExecuteQuery(clusterName, request);
             HitsAggsResponse<T> hitsAggsResponse = new HitsAggsResponse<>();
-            putInfoFromQueryIntoHitsResponse(request,elasticQueryResponse,hitsAggsResponse);
+            putInfoFromQueryIntoHitsResponse(request, elasticQueryResponse, hitsAggsResponse);
 
             hitsAggsResponse.setAggregations(elasticQueryResponse.getAggregations());
             return hitsAggsResponse;
@@ -94,12 +95,13 @@ public class SearchService {
     /**
      * Returns the number of documents in the specified index
      *
+     * @param clusterName Name of the cluster to execute the query against
      * @param indexName The name of the index to use for counting documents
      * @return Long representing the number of documents in the provided index.
      */
-    public Long countByIndex(String indexName) {
+    public Long countByIndex(String clusterName, String indexName) {
         try {
-            Response response = clusterManagementService.getCurrentClient().performRequest(GET, indexName + "/_count");
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(GET, indexName + "/_count");
 
             return jacksonObjectMapper.readValue(response.getEntity().getContent(), MetricResponse.class).getCount();
 
@@ -110,10 +112,10 @@ public class SearchService {
 
     }
 
-    private <T> ElasticQueryResponse<T> doExecuteQuery(SearchByTemplateRequest request) throws IOException {
+    private <T> ElasticQueryResponse<T> doExecuteQuery(String clusterName, SearchByTemplateRequest request) throws IOException {
         Map<String, String> params = new HashMap<>();
         params.put("typed_keys", null);
-        Response response = clusterManagementService.getCurrentClient().performRequest(
+        Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(
                 GET,
                 request.getIndexName() + "/_search",
                 params,

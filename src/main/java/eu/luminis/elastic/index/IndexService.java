@@ -28,15 +28,28 @@ public class IndexService {
     private final ClusterManagementService clusterManagementService;
     private final ObjectMapper jacksonObjectMapper;
 
+    /**
+     * Service containing functionality to manage indexes.
+     *
+     * @param clusterManagementService Used to interact with the clusters
+     * @param jacksonObjectMapper      Mapper used to handle responses
+     */
     @Autowired
     public IndexService(ClusterManagementService clusterManagementService, ObjectMapper jacksonObjectMapper) {
         this.clusterManagementService = clusterManagementService;
         this.jacksonObjectMapper = jacksonObjectMapper;
     }
 
-    public Boolean indexExist(String indexName) {
+    /**
+     * Checks if the cluster with the provided cluster name contains an index with the provided index name
+     *
+     * @param clusterName The name of the cluster to connect to
+     * @param indexName   The name of the index to check for existence
+     * @return True if the index exists in the cluster with the provided name
+     */
+    public Boolean indexExist(String clusterName, String indexName) {
         try {
-            Response response = clusterManagementService.getCurrentClient().performRequest(
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(
                     "HEAD",
                     indexName
             );
@@ -57,10 +70,18 @@ public class IndexService {
         }
     }
 
-    public void createIndex(String indexName, String requestBody) {
+    /**
+     * Create a new index with the name {@code indexName} in the cluster with the provided {@code clusterName}. The
+     * index settings and mappings can be provided using the {@code requestBody}
+     *
+     * @param clusterName The name of the cluster to create the index in.
+     * @param indexName   The name of the index to create
+     * @param requestBody The mappings and settings for the index to be created
+     */
+    public void createIndex(String clusterName, String indexName, String requestBody) {
         try {
             HttpEntity entity = new StringEntity(requestBody);
-            Response response = clusterManagementService.getCurrentClient().performRequest(
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(
                     "PUT",
                     indexName,
                     new Hashtable<>(),
@@ -81,9 +102,15 @@ public class IndexService {
         }
     }
 
-    public void dropIndex(String indexName) {
+    /**
+     * Drop the index with the provided {@code indexName} in the cluster with the provided {@code clusterName}
+     *
+     * @param clusterName The name of the cluster to drop the index from
+     * @param indexName   The name of the index to drop
+     */
+    public void dropIndex(String clusterName, String indexName) {
         try {
-            Response response = clusterManagementService.getCurrentClient().performRequest(
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(
                     "DELETE",
                     indexName);
 
@@ -99,14 +126,20 @@ public class IndexService {
 
     }
 
-    public void refreshIndexes(String... names) {
+    /**
+     * Refresh the provided indexes {@code names} in the cluster with the provided name {@code clusterName}
+     *
+     * @param clusterName The name of the cluster to refresh the indexes from
+     * @param names The names of the indexes to be refreshed
+     */
+    public void refreshIndexes(String clusterName, String... names) {
         try {
             String endpoint = "/_refresh";
             if (names.length > 0) {
                 endpoint = "/" + String.join(",", names) + endpoint;
             }
 
-            Response response = clusterManagementService.getCurrentClient().performRequest(
+            Response response = clusterManagementService.getRestClientForCluster(clusterName).performRequest(
                     "POST",
                     endpoint
             );

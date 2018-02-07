@@ -1,10 +1,16 @@
 # elastic-rest-spring-wrapper
-Thin wrapper for interacting with elasticsearch using the REST client, it has
-a few methods to create indexes and also some utilities to create 
+Thin wrapper for interacting with elasticsearch using the REST client. Besides making it easier from the spring
+framework to interact with elasticsearch it gives you some additional functionality. It contains methods to help while
+interacting with indexes, transform objects into searchable documents and create queries using templates that are easy
+to read without using complete java builder structures.
+
+The client comes in two flavors:
+* Single cluster configuration
+** Multi cluster configuration
 
 # Artifacts
 Artifacts are deployed in the luminis nexus repository. This repository 
-cannot act as a mirror. You can only download our own artifacts overthere.
+cannot act as a mirror. You can only download our own artifacts over there.
 
 Add this repository to your pom:
 ```
@@ -20,7 +26,7 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.9.0</version>
+    <version>0.12.0</version>
 </dependency>
 ```
 
@@ -29,14 +35,24 @@ Add this repository to your pom:
 <dependency>
     <groupId>eu.luminis</groupId>
     <artifactId>elastic-rest-spring-wrapper</artifactId>
-    <version>0.10.0-SNAPSHOT</version>
+    <version>0.13.0-SNAPSHOT</version>
 </dependency>
 ```
 
 # Using the library
+As mentioned before, there are two ways to use the library. If you just connect to one custer you can use the following
+configuration in spring.
+```
+@Import(SingleClusterRestClientConfig.class)
+```
+
+If however you want to specify the cluster yourself and be able to switch clusters in you application. You want to use
+the following configuration. In this case you do have to register one or more clusters yourself. Watch for messages
+that no cluster was found if you are having problems.
 ```
 @Import(RestClientConfig.class)
 ```
+
 
 # Query for document by ID
 To query for a document by ID we just need to provide a TypeReference that is required to obtain a typed object.
